@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as CalendarRouteImport } from './routes/calendar'
+import { Route as MoneyRouteImport } from './routes/money'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as StatsRouteImport } from './routes/stats'
 import { Route as TodayRouteImport } from './routes/today'
@@ -29,6 +30,11 @@ const AuthRoute = AuthRouteImport.update({
 const CalendarRoute = CalendarRouteImport.update({
   id: '/calendar',
   path: '/calendar',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MoneyRoute = MoneyRouteImport.update({
+  id: '/money',
+  path: '/money',
   getParentRoute: () => rootRouteImport,
 } as any)
 const OnboardingRoute = OnboardingRouteImport.update({
@@ -51,6 +57,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/calendar': typeof CalendarRoute
+  '/money': typeof MoneyRoute
   '/onboarding': typeof OnboardingRoute
   '/stats': typeof StatsRoute
   '/today': typeof TodayRoute
@@ -59,6 +66,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/calendar': typeof CalendarRoute
+  '/money': typeof MoneyRoute
   '/onboarding': typeof OnboardingRoute
   '/stats': typeof StatsRoute
   '/today': typeof TodayRoute
@@ -68,20 +76,24 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/calendar': typeof CalendarRoute
+  '/money': typeof MoneyRoute
   '/onboarding': typeof OnboardingRoute
   '/stats': typeof StatsRoute
   '/today': typeof TodayRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/auth' | '/calendar' | '/onboarding' | '/stats' | '/today'
+  fullPaths:
+    '/' | '/auth' | '/calendar' | '/money' | '/onboarding' | '/stats' | '/today'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auth' | '/calendar' | '/onboarding' | '/stats' | '/today'
+  to:
+    '/' | '/auth' | '/calendar' | '/money' | '/onboarding' | '/stats' | '/today'
   id:
     | '__root__'
     | '/'
     | '/auth'
     | '/calendar'
+    | '/money'
     | '/onboarding'
     | '/stats'
     | '/today'
@@ -91,6 +103,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthRoute: typeof AuthRoute
   CalendarRoute: typeof CalendarRoute
+  MoneyRoute: typeof MoneyRoute
   OnboardingRoute: typeof OnboardingRoute
   StatsRoute: typeof StatsRoute
   TodayRoute: typeof TodayRoute
@@ -117,6 +130,13 @@ declare module '@tanstack/react-router' {
       path: '/calendar'
       fullPath: '/calendar'
       preLoaderRoute: typeof CalendarRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/money': {
+      id: '/money'
+      path: '/money'
+      fullPath: '/money'
+      preLoaderRoute: typeof MoneyRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/onboarding': {
@@ -147,6 +167,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthRoute: AuthRoute,
   CalendarRoute: CalendarRoute,
+  MoneyRoute: MoneyRoute,
   OnboardingRoute: OnboardingRoute,
   StatsRoute: StatsRoute,
   TodayRoute: TodayRoute,
