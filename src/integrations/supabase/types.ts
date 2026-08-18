@@ -14,13 +14,275 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      avoided_expenses: {
+        Row: {
+          amount: number
+          couple_id: string
+          created_at: string
+          date: string
+          description: string | null
+          id: string
+          profile_id: string
+          reason: string | null
+        }
+        Insert: {
+          amount?: number
+          couple_id: string
+          created_at?: string
+          date?: string
+          description?: string | null
+          id?: string
+          profile_id: string
+          reason?: string | null
+        }
+        Update: {
+          amount?: number
+          couple_id?: string
+          created_at?: string
+          date?: string
+          description?: string | null
+          id?: string
+          profile_id?: string
+          reason?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "avoided_expenses_couple_id_fkey"
+            columns: ["couple_id"]
+            isOneToOne: false
+            referencedRelation: "couples"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "avoided_expenses_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      couples: {
+        Row: {
+          created_at: string
+          duration: number
+          id: string
+          invite_code: string
+          is_demo: boolean
+          name: string
+          start_date: string
+        }
+        Insert: {
+          created_at?: string
+          duration?: number
+          id?: string
+          invite_code?: string
+          is_demo?: boolean
+          name: string
+          start_date?: string
+        }
+        Update: {
+          created_at?: string
+          duration?: number
+          id?: string
+          invite_code?: string
+          is_demo?: boolean
+          name?: string
+          start_date?: string
+        }
+        Relationships: []
+      }
+      daily_habits: {
+        Row: {
+          certification_completed: boolean
+          certification_minutes: number | null
+          certification_topic: string | null
+          couple_id: string
+          created_at: string
+          date: string
+          healthy_food_completed: boolean
+          id: string
+          notes: string | null
+          profile_id: string
+          unnecessary_spending_completed: boolean
+          updated_at: string
+          walk_completed: boolean
+          walk_duration: number | null
+        }
+        Insert: {
+          certification_completed?: boolean
+          certification_minutes?: number | null
+          certification_topic?: string | null
+          couple_id: string
+          created_at?: string
+          date: string
+          healthy_food_completed?: boolean
+          id?: string
+          notes?: string | null
+          profile_id: string
+          unnecessary_spending_completed?: boolean
+          updated_at?: string
+          walk_completed?: boolean
+          walk_duration?: number | null
+        }
+        Update: {
+          certification_completed?: boolean
+          certification_minutes?: number | null
+          certification_topic?: string | null
+          couple_id?: string
+          created_at?: string
+          date?: string
+          healthy_food_completed?: boolean
+          id?: string
+          notes?: string | null
+          profile_id?: string
+          unnecessary_spending_completed?: boolean
+          updated_at?: string
+          walk_completed?: boolean
+          walk_duration?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "daily_habits_couple_id_fkey"
+            columns: ["couple_id"]
+            isOneToOne: false
+            referencedRelation: "couples"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "daily_habits_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          auth_user_id: string | null
+          avatar: string | null
+          couple_id: string
+          created_at: string
+          id: string
+          name: string
+          relationship: string
+        }
+        Insert: {
+          auth_user_id?: string | null
+          avatar?: string | null
+          couple_id: string
+          created_at?: string
+          id?: string
+          name: string
+          relationship?: string
+        }
+        Update: {
+          auth_user_id?: string | null
+          avatar?: string | null
+          couple_id?: string
+          created_at?: string
+          id?: string
+          name?: string
+          relationship?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profiles_couple_id_fkey"
+            columns: ["couple_id"]
+            isOneToOne: false
+            referencedRelation: "couples"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      reminders: {
+        Row: {
+          created_at: string
+          enabled: boolean
+          id: string
+          profile_id: string
+          reminder_time: string
+          reminder_type: string
+        }
+        Insert: {
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          profile_id: string
+          reminder_time?: string
+          reminder_type: string
+        }
+        Update: {
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          profile_id?: string
+          reminder_time?: string
+          reminder_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reminders_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      weekly_reviews: {
+        Row: {
+          couple_id: string
+          created_at: string
+          id: string
+          profile_id: string
+          week_number: number
+          what_to_improve: string | null
+          what_went_well: string | null
+        }
+        Insert: {
+          couple_id: string
+          created_at?: string
+          id?: string
+          profile_id: string
+          week_number: number
+          what_to_improve?: string | null
+          what_went_well?: string | null
+        }
+        Update: {
+          couple_id?: string
+          created_at?: string
+          id?: string
+          profile_id?: string
+          week_number?: number
+          what_to_improve?: string | null
+          what_went_well?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "weekly_reviews_couple_id_fkey"
+            columns: ["couple_id"]
+            isOneToOne: false
+            referencedRelation: "couples"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "weekly_reviews_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      my_couple_id: { Args: never; Returns: string }
+      my_profile_id: { Args: never; Returns: string }
     }
     Enums: {
       [_ in never]: never
