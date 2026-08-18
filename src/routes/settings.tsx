@@ -175,9 +175,17 @@ function SettingsView({ me, couple }: { me: Profile; couple: Couple }) {
         })}
       </section>
 
+      <Link
+        to="/admin"
+        className="block w-full rounded-xl border border-input py-2.5 text-center text-sm font-medium"
+      >
+        Admin console
+      </Link>
+
       <button onClick={signOut} className="w-full rounded-xl border border-input py-2.5 text-sm font-medium">
         Sign out
       </button>
+
     </div>
   );
 }
