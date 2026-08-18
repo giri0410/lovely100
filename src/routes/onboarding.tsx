@@ -2,9 +2,8 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
+import * as api from "@/mock/api";
 import { useMyProfile, useSession } from "@/hooks/useChallenge";
-import { todayISO } from "@/lib/challenge";
 
 export const Route = createFileRoute("/onboarding")({
   ssr: false,
@@ -43,14 +42,7 @@ function Onboarding() {
   const demoProfiles = useQuery({
     queryKey: ["demo-profiles"],
     enabled: !!userId,
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("id, name, relationship, couple_id")
-        .is("auth_user_id", null);
-      if (error) throw error;
-      return data ?? [];
-    },
+    queryFn: () => api.listUnclaimedProfiles(),
   });
 
   const finish = async () => {
@@ -60,55 +52,48 @@ function Onboarding() {
 
   const claim = async (profileId: string) => {
     setBusy(true);
-    const { error } = await supabase.from("profiles").update({ auth_user_id: userId }).eq("id", profileId);
-    setBusy(false);
-    if (error) { toast.error(error.message); return; }
-    toast.success("You're in. Welcome!");
-    finish();
+    try {
+      await api.claimProfile(profileId, userId!);
+      toast.success("You're in. Welcome!");
+      finish();
+    } catch (err) {
+      toast.error((err as Error).message);
+    } finally {
+      setBusy(false);
+    }
   };
 
   const createCouple = async () => {
     if (!name.trim()) { toast.error("Add your name first"); return; }
     setBusy(true);
-    const { data: couple, error } = await supabase
-      .from("couples")
-      .insert({ name: coupleName.trim() || `${name.trim()}'s challenge`, start_date: todayISO(), duration: 100 })
-      .select()
-      .single();
-    if (error || !couple) {
+    try {
+      await api.createCouple({
+        userId: userId!,
+        name: name.trim(),
+        coupleName: coupleName.trim(),
+        relationship,
+      });
+      toast.success("Challenge created — Day 1 starts today!");
+      finish();
+    } catch (err) {
+      toast.error((err as Error).message);
+    } finally {
       setBusy(false);
-      toast.error(error?.message ?? "Could not create the challenge");
-      return;
     }
-    const { error: pErr } = await supabase
-      .from("profiles")
-      .insert({ couple_id: couple.id, auth_user_id: userId, name: name.trim(), relationship });
-    setBusy(false);
-    if (pErr) { toast.error(pErr.message); return; }
-    toast.success("Challenge created — Day 1 starts today!");
-    finish();
   };
 
   const joinCouple = async () => {
     if (!name.trim() || !code.trim()) { toast.error("Add your name and the invite code"); return; }
     setBusy(true);
-    const { data: couple, error } = await supabase
-      .from("couples")
-      .select("id")
-      .eq("invite_code", code.trim().toUpperCase())
-      .maybeSingle();
-    if (error || !couple) {
+    try {
+      await api.joinCouple({ userId: userId!, name: name.trim(), relationship, inviteCode: code });
+      toast.success("You're connected with your partner 💛");
+      finish();
+    } catch (err) {
+      toast.error((err as Error).message);
+    } finally {
       setBusy(false);
-      toast.error("We couldn't find that invite code");
-      return;
     }
-    const { error: pErr } = await supabase
-      .from("profiles")
-      .insert({ couple_id: couple.id, auth_user_id: userId, name: name.trim(), relationship });
-    setBusy(false);
-    if (pErr) { toast.error(pErr.message); return; }
-    toast.success("You're connected with your partner 💛");
-    finish();
   };
 
   return (
