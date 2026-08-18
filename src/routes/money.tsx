@@ -3,7 +3,7 @@ import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { AppShell, PageHeader } from "@/components/AppShell";
-import { supabase } from "@/integrations/supabase/client";
+import * as api from "@/mock/api";
 import { formatMoney, formatShortDate, todayISO } from "@/lib/challenge";
 import { monthlySavings } from "@/lib/stats";
 
@@ -51,17 +51,14 @@ function MoneyView({
   const months = monthlySavings(expenses as never);
 
   const add = useMutation({
-    mutationFn: async () => {
-      const { error } = await supabase.from("avoided_expenses").insert({
-        couple_id: coupleId,
-        profile_id: me,
+    mutationFn: () =>
+      api.addExpense({
+        profileId: me,
         amount: Number(amount),
         description: description || null,
         reason: reason || null,
         date,
-      });
-      if (error) throw error;
-    },
+      }),
     onSuccess: () => {
       toast.success("Nice call — logged as money not spent.");
       setAmount("");
@@ -73,10 +70,7 @@ function MoneyView({
   });
 
   const remove = useMutation({
-    mutationFn: async (id: string) => {
-      const { error } = await supabase.from("avoided_expenses").delete().eq("id", id);
-      if (error) throw error;
-    },
+    mutationFn: (id: string) => api.deleteExpense(id),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["challenge", coupleId] }),
   });
 

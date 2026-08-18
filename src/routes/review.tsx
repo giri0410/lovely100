@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { AppShell, PageHeader } from "@/components/AppShell";
-import { supabase } from "@/integrations/supabase/client";
+import * as api from "@/mock/api";
 import {
   completedCount,
   formatMinutes,
@@ -84,19 +84,14 @@ function ReviewView({
   }, [week, existing?.what_went_well, existing?.what_to_improve]);
 
   const save = useMutation({
-    mutationFn: async () => {
-      const { error } = await supabase.from("weekly_reviews").upsert(
-        {
-          couple_id: coupleId,
-          profile_id: me,
-          week_number: week,
-          what_went_well: well || null,
-          what_to_improve: improve || null,
-        } as never,
-        { onConflict: "profile_id,week_number" },
-      );
-      if (error) throw error;
-    },
+    mutationFn: () =>
+      api.upsertReview({
+        coupleId,
+        profileId: me,
+        weekNumber: week,
+        whatWentWell: well || null,
+        whatToImprove: improve || null,
+      }),
     onSuccess: () => {
       toast.success("Review saved 💛");
       qc.invalidateQueries({ queryKey: ["challenge", coupleId] });

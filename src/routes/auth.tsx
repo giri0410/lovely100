@@ -1,8 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
-import { lovable } from "@/integrations/lovable/index";
+import { mockAuth } from "@/mock/api";
 
 export const Route = createFileRoute("/auth")({
   ssr: false,
@@ -27,8 +26,8 @@ function AuthPage() {
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
-      if (data.session) navigate({ to: "/today" });
+    mockAuth.getSession().then(({ userId }) => {
+      if (userId) navigate({ to: "/today" });
     });
   }, [navigate]);
 
@@ -37,16 +36,10 @@ function AuthPage() {
     setBusy(true);
     try {
       if (mode === "signup") {
-        const { error } = await supabase.auth.signUp({
-          email,
-          password,
-          options: { emailRedirectTo: window.location.origin },
-        });
-        if (error) throw error;
+        await mockAuth.signUp(email, password);
         toast.success("Account created. Let's set up your challenge.");
       } else {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
-        if (error) throw error;
+        await mockAuth.signIn(email, password);
       }
       navigate({ to: "/onboarding" });
     } catch (err) {
@@ -57,12 +50,7 @@ function AuthPage() {
   };
 
   const google = async () => {
-    const result = await lovable.auth.signInWithOAuth("google", { redirect_uri: window.location.origin });
-    if (result.error) {
-      toast.error("Google sign-in failed. Please try again.");
-      return;
-    }
-    if (result.redirected) return;
+    await mockAuth.signInWithGoogle();
     navigate({ to: "/onboarding" });
   };
 
@@ -115,7 +103,11 @@ function AuthPage() {
           </button>
         </form>
 
-        <p className="mt-4 text-center text-sm text-muted-foreground">
+        <p className="mt-4 text-center text-xs text-muted-foreground">
+          Demo mode — try <span className="font-medium">demo@100days.app</span> / <span className="font-medium">demo1234</span>
+        </p>
+
+        <p className="mt-3 text-center text-sm text-muted-foreground">
           {mode === "signin" ? "New here?" : "Already have an account?"}{" "}
           <button
             type="button"

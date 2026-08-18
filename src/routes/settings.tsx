@@ -3,7 +3,7 @@ import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { AppShell, PageHeader } from "@/components/AppShell";
-import { supabase } from "@/integrations/supabase/client";
+import * as api from "@/mock/api";
 import { useReminders } from "@/hooks/useChallenge";
 import { Switch } from "@/components/ui/switch";
 import type { Couple, Profile } from "@/lib/challenge";
@@ -43,10 +43,7 @@ function SettingsView({ me, couple }: { me: Profile; couple: Couple }) {
   const reminders = useReminders(me.id);
 
   const saveProfile = useMutation({
-    mutationFn: async () => {
-      const { error } = await supabase.from("profiles").update({ name }).eq("id", me.id);
-      if (error) throw error;
-    },
+    mutationFn: () => api.updateProfileName(me.id, name),
     onSuccess: () => {
       toast.success("Profile updated");
       qc.invalidateQueries();
@@ -55,13 +52,7 @@ function SettingsView({ me, couple }: { me: Profile; couple: Couple }) {
   });
 
   const saveCouple = useMutation({
-    mutationFn: async () => {
-      const { error } = await supabase
-        .from("couples")
-        .update({ name: coupleName, start_date: startDate })
-        .eq("id", couple.id);
-      if (error) throw error;
-    },
+    mutationFn: () => api.updateCouple(couple.id, { name: coupleName, start_date: startDate }),
     onSuccess: () => {
       toast.success("Challenge updated");
       qc.invalidateQueries();
@@ -70,21 +61,14 @@ function SettingsView({ me, couple }: { me: Profile; couple: Couple }) {
   });
 
   const saveReminder = useMutation({
-    mutationFn: async ({ type, enabled, time }: { type: string; enabled: boolean; time: string }) => {
-      const { error } = await supabase
-        .from("reminders")
-        .upsert(
-          { profile_id: me.id, reminder_type: type, enabled, reminder_time: time } as never,
-          { onConflict: "profile_id,reminder_type" },
-        );
-      if (error) throw error;
-    },
+    mutationFn: ({ type, enabled, time }: { type: string; enabled: boolean; time: string }) =>
+      api.upsertReminder({ profileId: me.id, type, enabled, time }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["reminders", me.id] }),
     onError: (e: Error) => toast.error(e.message),
   });
 
   const signOut = async () => {
-    await supabase.auth.signOut();
+    await api.mockAuth.signOut();
     qc.clear();
     navigate({ to: "/auth" });
   };

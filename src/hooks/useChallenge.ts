@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import * as api from "@/mock/api";
 import type { AvoidedExpense, Couple, DailyHabit, Profile } from "@/lib/challenge";
 
 export interface WeeklyReview {
@@ -25,17 +25,15 @@ export function useSession() {
 
   useEffect(() => {
     let active = true;
-    supabase.auth.getSession().then(({ data }) => {
+    api.mockAuth.getSession().then(({ userId: id }) => {
       if (!active) return;
-      setUserId(data.session?.user.id ?? null);
+      setUserId(id);
       setLoading(false);
     });
-    const { data: sub } = supabase.auth.onAuthStateChange((_e, session) => {
-      setUserId(session?.user.id ?? null);
-    });
+    const unsubscribe = api.mockAuth.onChange((id) => setUserId(id));
     return () => {
       active = false;
-      sub.subscription.unsubscribe();
+      unsubscribe();
     };
   }, []);
 
@@ -46,15 +44,7 @@ export function useMyProfile(userId: string | null) {
   return useQuery({
     queryKey: ["my-profile", userId],
     enabled: !!userId,
-    queryFn: async (): Promise<Profile | null> => {
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("auth_user_id", userId!)
-        .maybeSingle();
-      if (error) throw error;
-      return (data as Profile | null) ?? null;
-    },
+    queryFn: (): Promise<Profile | null> => api.getMyProfile(userId!),
   });
 }
 
@@ -70,39 +60,15 @@ export function useChallengeData(coupleId: string | undefined) {
   return useQuery({
     queryKey: ["challenge", coupleId],
     enabled: !!coupleId,
-    queryFn: async (): Promise<ChallengeData> => {
-      const [couple, profiles, habits, expenses, reviews] = await Promise.all([
-        supabase.from("couples").select("*").eq("id", coupleId!).single(),
-        supabase.from("profiles").select("*").eq("couple_id", coupleId!).order("created_at"),
-        supabase.from("daily_habits").select("*").eq("couple_id", coupleId!).order("date"),
-        supabase.from("avoided_expenses").select("*").eq("couple_id", coupleId!).order("date", { ascending: false }),
-        supabase.from("weekly_reviews").select("*").eq("couple_id", coupleId!),
-      ]);
-      const err = couple.error || profiles.error || habits.error || expenses.error || reviews.error;
-      if (err) throw err;
-      return {
-        couple: couple.data as unknown as Couple,
-        profiles: (profiles.data ?? []) as unknown as Profile[],
-        habits: (habits.data ?? []) as unknown as DailyHabit[],
-        expenses: (expenses.data ?? []).map((e) => ({ ...e, amount: Number(e.amount) })) as unknown as AvoidedExpense[],
-        reviews: (reviews.data ?? []) as unknown as WeeklyReview[],
-      };
-    },
+    queryFn: (): Promise<ChallengeData> => api.getChallengeData(coupleId!),
   });
 }
 
 export function useHabitMutation(coupleId: string | undefined, profileId: string | undefined) {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async ({ date, patch }: { date: string; patch: Partial<DailyHabit> }) => {
-      const { error } = await supabase
-        .from("daily_habits")
-        .upsert(
-          { couple_id: coupleId!, profile_id: profileId!, date, ...patch } as never,
-          { onConflict: "profile_id,date" },
-        );
-      if (error) throw error;
-    },
+    mutationFn: ({ date, patch }: { date: string; patch: Partial<DailyHabit> }) =>
+      api.upsertHabit({ coupleId: coupleId!, profileId: profileId!, date, patch }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["challenge", coupleId] }),
   });
 }
@@ -111,10 +77,6 @@ export function useReminders(profileId: string | undefined) {
   return useQuery({
     queryKey: ["reminders", profileId],
     enabled: !!profileId,
-    queryFn: async (): Promise<Reminder[]> => {
-      const { data, error } = await supabase.from("reminders").select("*").eq("profile_id", profileId!);
-      if (error) throw error;
-      return (data ?? []) as unknown as Reminder[];
-    },
+    queryFn: (): Promise<Reminder[]> => api.listReminders(profileId!),
   });
 }
