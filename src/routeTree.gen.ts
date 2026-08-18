@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as CalendarRouteImport } from './routes/calendar'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
+import { Route as StatsRouteImport } from './routes/stats'
 import { Route as TodayRouteImport } from './routes/today'
 
 const IndexRoute = IndexRouteImport.update({
@@ -35,6 +36,11 @@ const OnboardingRoute = OnboardingRouteImport.update({
   path: '/onboarding',
   getParentRoute: () => rootRouteImport,
 } as any)
+const StatsRoute = StatsRouteImport.update({
+  id: '/stats',
+  path: '/stats',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const TodayRoute = TodayRouteImport.update({
   id: '/today',
   path: '/today',
@@ -46,6 +52,7 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/calendar': typeof CalendarRoute
   '/onboarding': typeof OnboardingRoute
+  '/stats': typeof StatsRoute
   '/today': typeof TodayRoute
 }
 export interface FileRoutesByTo {
@@ -53,6 +60,7 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/calendar': typeof CalendarRoute
   '/onboarding': typeof OnboardingRoute
+  '/stats': typeof StatsRoute
   '/today': typeof TodayRoute
 }
 export interface FileRoutesById {
@@ -61,14 +69,22 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/calendar': typeof CalendarRoute
   '/onboarding': typeof OnboardingRoute
+  '/stats': typeof StatsRoute
   '/today': typeof TodayRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/auth' | '/calendar' | '/onboarding' | '/today'
+  fullPaths: '/' | '/auth' | '/calendar' | '/onboarding' | '/stats' | '/today'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auth' | '/calendar' | '/onboarding' | '/today'
-  id: '__root__' | '/' | '/auth' | '/calendar' | '/onboarding' | '/today'
+  to: '/' | '/auth' | '/calendar' | '/onboarding' | '/stats' | '/today'
+  id:
+    | '__root__'
+    | '/'
+    | '/auth'
+    | '/calendar'
+    | '/onboarding'
+    | '/stats'
+    | '/today'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -76,6 +92,7 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   CalendarRoute: typeof CalendarRoute
   OnboardingRoute: typeof OnboardingRoute
+  StatsRoute: typeof StatsRoute
   TodayRoute: typeof TodayRoute
 }
 
@@ -109,6 +126,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OnboardingRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/stats': {
+      id: '/stats'
+      path: '/stats'
+      fullPath: '/stats'
+      preLoaderRoute: typeof StatsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/today': {
       id: '/today'
       path: '/today'
@@ -124,6 +148,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   CalendarRoute: CalendarRoute,
   OnboardingRoute: OnboardingRoute,
+  StatsRoute: StatsRoute,
   TodayRoute: TodayRoute,
 }
 export const routeTree = rootRouteImport
