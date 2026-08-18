@@ -62,13 +62,13 @@ function Onboarding() {
     setBusy(true);
     const { error } = await supabase.from("profiles").update({ auth_user_id: userId }).eq("id", profileId);
     setBusy(false);
-    if (error) return toast.error(error.message);
+    if (error) { toast.error(error.message); return; }
     toast.success("You're in. Welcome!");
     finish();
   };
 
   const createCouple = async () => {
-    if (!name.trim()) return toast.error("Add your name first");
+    if (!name.trim()) { toast.error("Add your name first"); return; }
     setBusy(true);
     const { data: couple, error } = await supabase
       .from("couples")
@@ -77,19 +77,20 @@ function Onboarding() {
       .single();
     if (error || !couple) {
       setBusy(false);
-      return toast.error(error?.message ?? "Could not create the challenge");
+      toast.error(error?.message ?? "Could not create the challenge");
+      return;
     }
     const { error: pErr } = await supabase
       .from("profiles")
       .insert({ couple_id: couple.id, auth_user_id: userId, name: name.trim(), relationship });
     setBusy(false);
-    if (pErr) return toast.error(pErr.message);
+    if (pErr) { toast.error(pErr.message); return; }
     toast.success("Challenge created — Day 1 starts today!");
     finish();
   };
 
   const joinCouple = async () => {
-    if (!name.trim() || !code.trim()) return toast.error("Add your name and the invite code");
+    if (!name.trim() || !code.trim()) { toast.error("Add your name and the invite code"); return; }
     setBusy(true);
     const { data: couple, error } = await supabase
       .from("couples")
@@ -98,13 +99,14 @@ function Onboarding() {
       .maybeSingle();
     if (error || !couple) {
       setBusy(false);
-      return toast.error("We couldn't find that invite code");
+      toast.error("We couldn't find that invite code");
+      return;
     }
     const { error: pErr } = await supabase
       .from("profiles")
       .insert({ couple_id: couple.id, auth_user_id: userId, name: name.trim(), relationship });
     setBusy(false);
-    if (pErr) return toast.error(pErr.message);
+    if (pErr) { toast.error(pErr.message); return; }
     toast.success("You're connected with your partner 💛");
     finish();
   };
