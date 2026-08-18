@@ -1,20 +1,11 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { ArrowLeft, KeyRound, Pencil, Search, ShieldCheck, Trash2, UserCog } from "lucide-react";
 import { useSession } from "@/hooks/useChallenge";
-import {
-  claimFirstAdmin,
-  deleteUser,
-  getAdminStatus,
-  listUsers,
-  sendPasswordReset,
-  setUserAdmin,
-  updateUserProfile,
-  type AdminUserRow,
-} from "@/lib/admin.functions";
+import * as api from "@/mock/api";
+import type { AdminUserRow } from "@/mock/api";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import {
@@ -42,18 +33,16 @@ export const Route = createFileRoute("/admin")({
 
 function AdminPage() {
   const { userId, loading } = useSession();
-  const status = useServerFn(getAdminStatus);
-  const claim = useServerFn(claimFirstAdmin);
   const qc = useQueryClient();
 
   const statusQuery = useQuery({
     queryKey: ["admin-status", userId],
     enabled: !!userId,
-    queryFn: () => status(),
+    queryFn: () => api.getAdminStatus(userId!),
   });
 
   const claimMutation = useMutation({
-    mutationFn: () => claim(),
+    mutationFn: () => api.claimFirstAdmin(userId!),
     onSuccess: () => {
       toast.success("You are now an admin");
       qc.invalidateQueries({ queryKey: ["admin-status"] });
@@ -123,34 +112,29 @@ function AdminConsole({ currentUserId }: { currentUserId: string }) {
   const [editing, setEditing] = useState<AdminUserRow | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<AdminUserRow | null>(null);
 
-  const fetchUsers = useServerFn(listUsers);
-  const roleFn = useServerFn(setUserAdmin);
-  const profileFn = useServerFn(updateUserProfile);
-  const deleteFn = useServerFn(deleteUser);
-  const resetFn = useServerFn(sendPasswordReset);
-
-  const usersQuery = useQuery({ queryKey: ["admin-users"], queryFn: () => fetchUsers() });
+  const usersQuery = useQuery({ queryKey: ["admin-users"], queryFn: () => api.listUsers() });
   const refresh = () => qc.invalidateQueries({ queryKey: ["admin-users"] });
   const onError = (e: Error) => toast.error(e.message);
 
   const roleMutation = useMutation({
-    mutationFn: (v: { userId: string; makeAdmin: boolean }) => roleFn({ data: v }),
+    mutationFn: (v: { userId: string; makeAdmin: boolean }) => api.setUserAdmin(v.userId, v.makeAdmin),
     onSuccess: () => { toast.success("Role updated"); refresh(); },
     onError,
   });
   const profileMutation = useMutation({
-    mutationFn: (v: { profileId: string; name: string; relationship: string }) => profileFn({ data: v }),
+    mutationFn: (v: { profileId: string; name: string; relationship: string }) =>
+      api.adminUpdateProfile(v.profileId, v.name, v.relationship),
     onSuccess: () => { toast.success("Profile updated"); setEditing(null); refresh(); },
     onError,
   });
   const deleteMutation = useMutation({
-    mutationFn: (v: { userId: string }) => deleteFn({ data: v }),
+    mutationFn: (v: { userId: string }) => api.deleteUser(v.userId),
     onSuccess: () => { toast.success("Account deleted"); setConfirmDelete(null); refresh(); },
     onError,
   });
   const resetMutation = useMutation({
-    mutationFn: (v: { email: string }) => resetFn({ data: v }),
-    onSuccess: () => toast.success("Password reset email sent"),
+    mutationFn: (v: { email: string }) => api.sendPasswordReset(v.email),
+    onSuccess: () => toast.success("Password reset email sent (demo)"),
     onError,
   });
 
