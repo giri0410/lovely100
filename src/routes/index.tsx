@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { mockAuth } from "@/mock/api";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -34,8 +34,8 @@ function Landing() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
-      if (data.session) navigate({ to: "/today" });
+    mockAuth.getSession().then(({ userId }) => {
+      if (userId) navigate({ to: "/today" });
     });
   }, [navigate]);
 
