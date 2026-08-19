@@ -3,7 +3,7 @@ import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { AppShell, PageHeader } from "@/components/AppShell";
-import * as api from "@/mock/api";
+import * as api from "@/data";
 import { formatMoney, formatShortDate, todayISO } from "@/lib/challenge";
 import { monthlySavings } from "@/lib/stats";
 
@@ -53,6 +53,7 @@ function MoneyView({
   const add = useMutation({
     mutationFn: () =>
       api.addExpense({
+        coupleId,
         profileId: me,
         amount: Number(amount),
         description: description || null,

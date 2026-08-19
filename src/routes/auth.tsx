@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { mockAuth } from "@/mock/api";
+import { auth } from "@/data";
 
 export const Route = createFileRoute("/auth")({
   ssr: false,
@@ -26,7 +26,7 @@ function AuthPage() {
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
-    mockAuth.getSession().then(({ userId }) => {
+    auth.getSession().then(({ userId }) => {
       if (userId) navigate({ to: "/today" });
     });
   }, [navigate]);
@@ -36,10 +36,10 @@ function AuthPage() {
     setBusy(true);
     try {
       if (mode === "signup") {
-        await mockAuth.signUp(email, password);
+        await auth.signUp(email, password);
         toast.success("Account created. Let's set up your challenge.");
       } else {
-        await mockAuth.signIn(email, password);
+        await auth.signIn(email, password);
       }
       navigate({ to: "/onboarding" });
     } catch (err) {
@@ -47,11 +47,6 @@ function AuthPage() {
     } finally {
       setBusy(false);
     }
-  };
-
-  const google = async () => {
-    await mockAuth.signInWithGoogle();
-    navigate({ to: "/onboarding" });
   };
 
   return (
@@ -94,20 +89,9 @@ function AuthPage() {
           >
             {busy ? "Please wait…" : mode === "signin" ? "Sign in" : "Create account"}
           </button>
-          <button
-            type="button"
-            onClick={google}
-            className="w-full rounded-xl border border-input bg-background py-2.5 text-sm font-medium"
-          >
-            Continue with Google
-          </button>
         </form>
 
-        <p className="mt-4 text-center text-xs text-muted-foreground">
-          Demo mode — try <span className="font-medium">demo@100days.app</span> / <span className="font-medium">demo1234</span>
-        </p>
-
-        <p className="mt-3 text-center text-sm text-muted-foreground">
+        <p className="mt-4 text-center text-sm text-muted-foreground">
           {mode === "signin" ? "New here?" : "Already have an account?"}{" "}
           <button
             type="button"

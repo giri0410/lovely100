@@ -292,6 +292,8 @@ export async function upsertHabit(input: {
 /* ------------------------------ expenses -------------------------------- */
 
 export async function addExpense(input: {
+  /** Unused in the mock layer — kept for signature parity with the real backend. */
+  coupleId?: string;
   profileId: string;
   amount: number;
   description: string | null;

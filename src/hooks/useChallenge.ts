@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import * as api from "@/mock/api";
+import * as api from "@/data";
 import type { AvoidedExpense, Couple, DailyHabit, Profile } from "@/lib/challenge";
 
 export interface WeeklyReview {
@@ -25,12 +25,12 @@ export function useSession() {
 
   useEffect(() => {
     let active = true;
-    api.mockAuth.getSession().then(({ userId: id }) => {
+    api.auth.getSession().then(({ userId: id }) => {
       if (!active) return;
       setUserId(id);
       setLoading(false);
     });
-    const unsubscribe = api.mockAuth.onChange((id) => setUserId(id));
+    const unsubscribe = api.auth.onChange((id) => setUserId(id));
     return () => {
       active = false;
       unsubscribe();

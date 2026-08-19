@@ -3,7 +3,7 @@ import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { AppShell, PageHeader } from "@/components/AppShell";
-import * as api from "@/mock/api";
+import * as api from "@/data";
 import { useReminders } from "@/hooks/useChallenge";
 import { Switch } from "@/components/ui/switch";
 import type { Couple, Profile } from "@/lib/challenge";
@@ -68,7 +68,7 @@ function SettingsView({ me, couple }: { me: Profile; couple: Couple }) {
   });
 
   const signOut = async () => {
-    await api.mockAuth.signOut();
+    await api.auth.signOut();
     qc.clear();
     navigate({ to: "/auth" });
   };

@@ -2,7 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import * as api from "@/mock/api";
+import * as api from "@/data";
 import { useMyProfile, useSession } from "@/hooks/useChallenge";
 
 export const Route = createFileRoute("/onboarding")({

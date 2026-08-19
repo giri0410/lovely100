@@ -4,8 +4,8 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { ArrowLeft, KeyRound, Pencil, Search, ShieldCheck, Trash2, UserCog } from "lucide-react";
 import { useSession } from "@/hooks/useChallenge";
-import * as api from "@/mock/api";
-import type { AdminUserRow } from "@/mock/api";
+import * as api from "@/data";
+import type { AdminUserRow } from "@/data";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import {

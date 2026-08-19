@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect } from "react";
-import { mockAuth } from "@/mock/api";
+import { auth } from "@/data";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -34,7 +34,7 @@ function Landing() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    mockAuth.getSession().then(({ userId }) => {
+    auth.getSession().then(({ userId }) => {
       if (userId) navigate({ to: "/today" });
     });
   }, [navigate]);
