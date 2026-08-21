@@ -6,6 +6,9 @@
 // You can pass additional config via defineConfig({ vite: { ... }, etc... }) if needed.
 import { defineConfig } from "@lovable.dev/vite-tanstack-config";
 
+/** Build-time env lookup, tolerant of the strict index-signature rules in tsconfig. */
+const env = (key: string): string => process.env[key] ?? "";
+
 export default defineConfig({
   tanstackStart: {
     // Redirect TanStack Start's bundled server entry to src/server.ts (our SSR error wrapper).
@@ -14,6 +17,9 @@ export default defineConfig({
   },
   nitro: {
     preset: "cloudflare-module",
+    // `wrangler` is passed through to the generated wrangler.json but isn't in
+    // nitro's published cloudflare option type, hence the cast. Verified working:
+    // the deploy log lists each value under "Your Worker has access to...".
     cloudflare: {
       nodeCompat: true,
       deployConfig: true,
@@ -23,13 +29,12 @@ export default defineConfig({
       // (sourced from the CI's *build*-time env, which is confirmed reliable).
       wrangler: {
         vars: {
-          SUPABASE_URL: process.env.SUPABASE_URL ?? process.env.VITE_SUPABASE_URL ?? "",
-          SUPABASE_PUBLISHABLE_KEY:
-            process.env.SUPABASE_PUBLISHABLE_KEY ?? process.env.VITE_SUPABASE_PUBLISHABLE_KEY ?? "",
-          SUPABASE_PROJECT_ID: process.env.SUPABASE_PROJECT_ID ?? process.env.VITE_SUPABASE_PROJECT_ID ?? "",
-          SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY ?? "",
+          SUPABASE_URL: env("SUPABASE_URL") || env("VITE_SUPABASE_URL"),
+          SUPABASE_PUBLISHABLE_KEY: env("SUPABASE_PUBLISHABLE_KEY") || env("VITE_SUPABASE_PUBLISHABLE_KEY"),
+          SUPABASE_PROJECT_ID: env("SUPABASE_PROJECT_ID") || env("VITE_SUPABASE_PROJECT_ID"),
+          SUPABASE_SERVICE_ROLE_KEY: env("SUPABASE_SERVICE_ROLE_KEY"),
         },
       },
-    },
+    } as { nodeCompat: boolean; deployConfig: boolean },
   },
 });

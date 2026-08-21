@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import * as api from "@/data";
 import { useMyProfile, useSession } from "@/hooks/useChallenge";
@@ -10,7 +10,7 @@ export const Route = createFileRoute("/onboarding")({
   head: () => ({
     meta: [
       { title: "Set up your challenge — 100 Days Together" },
-      { name: "description", content: "Create your 100-day couple challenge, join your partner, or explore the demo journey." },
+      { name: "description", content: "Create your 100-day couple challenge, or join your partner with their invite code." },
       { property: "og:title", content: "Set up your challenge — 100 Days Together" },
       { property: "og:description", content: "Start your shared 100-day habit challenge." },
       { property: "og:type", content: "website" },
@@ -39,28 +39,9 @@ function Onboarding() {
     if (meQuery.data) navigate({ to: "/today" });
   }, [meQuery.data, navigate]);
 
-  const demoProfiles = useQuery({
-    queryKey: ["demo-profiles"],
-    enabled: !!userId,
-    queryFn: () => api.listUnclaimedProfiles(),
-  });
-
   const finish = async () => {
     await qc.invalidateQueries({ queryKey: ["my-profile"] });
     navigate({ to: "/today" });
-  };
-
-  const claim = async (profileId: string) => {
-    setBusy(true);
-    try {
-      await api.claimProfile(profileId, userId!);
-      toast.success("You're in. Welcome!");
-      finish();
-    } catch (err) {
-      toast.error((err as Error).message);
-    } finally {
-      setBusy(false);
-    }
   };
 
   const createCouple = async () => {
@@ -101,7 +82,7 @@ function Onboarding() {
       <p className="eyebrow">Welcome</p>
       <h1 className="mt-1 text-2xl">Set up your 100 days</h1>
       <p className="mt-1 text-sm text-muted-foreground">
-        Start a fresh challenge, join your partner with their code, or explore the demo journey.
+        Start a fresh challenge, or join your partner with their invite code.
       </p>
 
       <div className="surface mt-6 space-y-3 p-5">
@@ -167,26 +148,6 @@ function Onboarding() {
         </button>
       </div>
 
-      {demoProfiles.data && demoProfiles.data.length > 0 ? (
-        <div className="surface mt-4 space-y-3 p-5">
-          <h2 className="text-base">Explore the demo</h2>
-          <p className="text-sm text-muted-foreground">
-            Jump into the Alex &amp; Priya demo challenge with 9 days of history already filled in.
-          </p>
-          <div className="flex flex-wrap gap-2">
-            {demoProfiles.data.map((p) => (
-              <button
-                key={p.id}
-                disabled={busy}
-                onClick={() => claim(p.id)}
-                className="rounded-xl border border-input px-4 py-2 text-sm font-medium disabled:opacity-60"
-              >
-                Continue as {p.name}
-              </button>
-            ))}
-          </div>
-        </div>
-      ) : null}
     </div>
   );
 }

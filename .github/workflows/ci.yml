@@ -1,0 +1,68 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# A newer push to the same branch supersedes an in-flight run.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # bun, not npm: bun.lock is the committed lockfile and Cloudflare's build
+      # installs with `bun install --frozen-lockfile`. Using the same tool here
+      # means CI fails on a lockfile drift that would otherwise only surface at
+      # deploy time.
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: "1.4.0"
+
+      - run: bun install --frozen-lockfile
+
+      - name: Typecheck
+        run: bun run typecheck
+
+      - name: Unit tests
+        run: bun run test
+
+      - name: Lint
+        run: bun run lint
+        # Inherited formatting debt across files this project never linted
+        # clean; surfaced but not blocking until it's been cleared once.
+        continue-on-error: true
+
+      # Guard against the mock layer being wired back in by accident — that is
+      # how the real backend got replaced with fixtures once before.
+      - name: No direct mock imports outside the data layer
+        run: |
+          if grep -rn "@/mock/" src --include="*.ts" --include="*.tsx" \
+             | grep -v "^src/data/" | grep -v "^src/mock/"; then
+            echo "::error::A route or component imports @/mock directly. Import from @/data instead."
+            exit 1
+          fi
+
+      # The service-role key bypasses every RLS policy, so it must never be
+      # reachable from code that ships to the browser.
+      - name: Service-role key stays server-side
+        run: |
+          if grep -rn "SUPABASE_SERVICE_ROLE_KEY" src \
+             --include="*.ts" --include="*.tsx" \
+             | grep -v "\.server\.ts"; then
+            echo "::error::SUPABASE_SERVICE_ROLE_KEY is referenced outside a .server.ts module."
+            exit 1
+          fi
+
+      # NOTE: tenant-isolation regressions can't be caught by static analysis —
+      # migrations are append-only, so the superseded permissive policies stay in
+      # the file history forever and any grep for them matches legitimately.
+      # Catching a real regression needs policies exercised against a database
+      # (`supabase start` locally, or a throwaway project's credentials in CI).
+      # Tracked as Phase 3 work; until then the RLS tests are the manual scripts
+      # in this PR's description.

@@ -7,7 +7,16 @@
  */
 import { supabase } from "@/integrations/supabase/client";
 import type { AvoidedExpense, Couple, DailyHabit, Profile } from "@/lib/challenge";
-import * as adminFns from "@/lib/admin.functions";
+
+/**
+ * Admin operations run as TanStack server functions, which only exist when a
+ * server is serving them. Import them lazily so their client stubs stay out of
+ * every page's module graph — a static import here would pull server-function
+ * plumbing into a future static mobile bundle.
+ */
+function adminFns() {
+  return import("@/lib/admin.functions");
+}
 
 /* ------------------------------- auth ---------------------------------- */
 
@@ -42,6 +51,18 @@ export const auth = {
     const { error } = await supabase.auth.signOut();
     if (error) throw error;
   },
+  /** Emails a recovery link that lands on /reset-password. */
+  async requestPasswordReset(email: string): Promise<void> {
+    const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+      redirectTo: `${window.location.origin}/reset-password`,
+    });
+    if (error) throw error;
+  },
+  /** Sets a new password for the session created by a recovery link. */
+  async updatePassword(password: string): Promise<void> {
+    const { error } = await supabase.auth.updateUser({ password });
+    if (error) throw error;
+  },
 };
 
 /* ------------------------------ profiles -------------------------------- */
@@ -50,17 +71,6 @@ export async function getMyProfile(userId: string): Promise<Profile | null> {
   const { data, error } = await supabase.from("profiles").select("*").eq("auth_user_id", userId).maybeSingle();
   if (error) throw new Error(error.message);
   return data as Profile | null;
-}
-
-export async function listUnclaimedProfiles(): Promise<Profile[]> {
-  const { data, error } = await supabase.from("profiles").select("*").is("auth_user_id", null);
-  if (error) throw new Error(error.message);
-  return (data ?? []) as Profile[];
-}
-
-export async function claimProfile(profileId: string, userId: string): Promise<void> {
-  const { error } = await supabase.from("profiles").update({ auth_user_id: userId }).eq("id", profileId);
-  if (error) throw new Error(error.message);
 }
 
 export async function createCouple(input: {
@@ -250,29 +260,29 @@ export interface AdminUserRow {
 }
 
 export async function getAdminStatus(_userId: string): Promise<{ isAdmin: boolean; adminCount: number }> {
-  return adminFns.getAdminStatus();
+  return (await adminFns()).getAdminStatus();
 }
 
 export async function claimFirstAdmin(_userId: string): Promise<void> {
-  await adminFns.claimFirstAdmin();
+  await (await adminFns()).claimFirstAdmin();
 }
 
 export async function listUsers(): Promise<AdminUserRow[]> {
-  return adminFns.listUsers();
+  return (await adminFns()).listUsers();
 }
 
 export async function setUserAdmin(userId: string, makeAdmin: boolean): Promise<void> {
-  await adminFns.setUserAdmin({ data: { userId, makeAdmin } });
+  await (await adminFns()).setUserAdmin({ data: { userId, makeAdmin } });
 }
 
 export async function adminUpdateProfile(profileId: string, name: string, relationship: string): Promise<void> {
-  await adminFns.updateUserProfile({ data: { profileId, name, relationship } });
+  await (await adminFns()).updateUserProfile({ data: { profileId, name, relationship } });
 }
 
 export async function deleteUser(userId: string): Promise<void> {
-  await adminFns.deleteUser({ data: { userId } });
+  await (await adminFns()).deleteUser({ data: { userId } });
 }
 
 export async function sendPasswordReset(email: string): Promise<void> {
-  await adminFns.sendPasswordReset({ data: { email } });
+  await (await adminFns()).sendPasswordReset({ data: { email } });
 }

@@ -13,8 +13,6 @@ const useMock = import.meta.env["VITE_BACKEND_MODE"] === "mock";
 export const auth = useMock ? mockApi.mockAuth : realApi.auth;
 
 export const getMyProfile = useMock ? mockApi.getMyProfile : realApi.getMyProfile;
-export const listUnclaimedProfiles = useMock ? mockApi.listUnclaimedProfiles : realApi.listUnclaimedProfiles;
-export const claimProfile = useMock ? mockApi.claimProfile : realApi.claimProfile;
 export const createCouple = useMock ? mockApi.createCouple : realApi.createCouple;
 export const joinCouple = useMock ? mockApi.joinCouple : realApi.joinCouple;
 export const updateProfileName = useMock ? mockApi.updateProfileName : realApi.updateProfileName;

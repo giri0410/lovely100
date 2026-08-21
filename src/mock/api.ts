@@ -112,34 +112,23 @@ export const mockAuth = {
     emitAuth();
     return user.id;
   },
-  /** Stand-in for a social login: signs into (or creates) a demo account. */
-  async signInWithGoogle(): Promise<string> {
-    hydrate();
-    await delay(null);
-    let user = db.users.find((u) => u.email === "google.user@100days.app");
-    if (!user) {
-      user = {
-        id: uid("user"),
-        email: "google.user@100days.app",
-        password: uid("pw"),
-        created_at: new Date().toISOString(),
-        last_sign_in_at: new Date().toISOString(),
-        email_confirmed: true,
-        is_admin: false,
-      };
-      db.users.push(user);
-    }
-    db.sessionUserId = user.id;
-    persist();
-    emitAuth();
-    return user.id;
-  },
   async signOut(): Promise<void> {
     hydrate();
     await delay(null);
     db.sessionUserId = null;
     persist();
     emitAuth();
+  },
+  async requestPasswordReset(_email: string): Promise<void> {
+    hydrate();
+    await delay(null);
+  },
+  async updatePassword(password: string): Promise<void> {
+    hydrate();
+    await delay(null);
+    const user = db.users.find((u) => u.id === db.sessionUserId);
+    if (user) user.password = password;
+    persist();
   },
 };
 
@@ -148,20 +137,6 @@ export const mockAuth = {
 export async function getMyProfile(userId: string): Promise<Profile | null> {
   hydrate();
   return delay(clone(db.profiles.find((p) => p.auth_user_id === userId) ?? null));
-}
-
-export async function listUnclaimedProfiles(): Promise<Profile[]> {
-  hydrate();
-  return delay(clone(db.profiles.filter((p) => p.auth_user_id === null)));
-}
-
-export async function claimProfile(profileId: string, userId: string): Promise<void> {
-  hydrate();
-  await delay(null);
-  const profile = db.profiles.find((p) => p.id === profileId);
-  if (!profile) throw new Error("That profile no longer exists.");
-  profile.auth_user_id = userId;
-  persist();
 }
 
 export async function createCouple(input: {

@@ -15,6 +15,7 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as CalendarRouteImport } from './routes/calendar'
 import { Route as MoneyRouteImport } from './routes/money'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as ReviewRouteImport } from './routes/review'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as StatsRouteImport } from './routes/stats'
@@ -51,6 +52,11 @@ const OnboardingRoute = OnboardingRouteImport.update({
   path: '/onboarding',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ReviewRoute = ReviewRouteImport.update({
   id: '/review',
   path: '/review',
@@ -84,6 +90,7 @@ export interface FileRoutesByFullPath {
   '/calendar': typeof CalendarRoute
   '/money': typeof MoneyRoute
   '/onboarding': typeof OnboardingRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/review': typeof ReviewRoute
   '/settings': typeof SettingsRoute
   '/stats': typeof StatsRoute
@@ -97,6 +104,7 @@ export interface FileRoutesByTo {
   '/calendar': typeof CalendarRoute
   '/money': typeof MoneyRoute
   '/onboarding': typeof OnboardingRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/review': typeof ReviewRoute
   '/settings': typeof SettingsRoute
   '/stats': typeof StatsRoute
@@ -111,6 +119,7 @@ export interface FileRoutesById {
   '/calendar': typeof CalendarRoute
   '/money': typeof MoneyRoute
   '/onboarding': typeof OnboardingRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/review': typeof ReviewRoute
   '/settings': typeof SettingsRoute
   '/stats': typeof StatsRoute
@@ -126,6 +135,7 @@ export interface FileRouteTypes {
     | '/calendar'
     | '/money'
     | '/onboarding'
+    | '/reset-password'
     | '/review'
     | '/settings'
     | '/stats'
@@ -139,6 +149,7 @@ export interface FileRouteTypes {
     | '/calendar'
     | '/money'
     | '/onboarding'
+    | '/reset-password'
     | '/review'
     | '/settings'
     | '/stats'
@@ -152,6 +163,7 @@ export interface FileRouteTypes {
     | '/calendar'
     | '/money'
     | '/onboarding'
+    | '/reset-password'
     | '/review'
     | '/settings'
     | '/stats'
@@ -166,6 +178,7 @@ export interface RootRouteChildren {
   CalendarRoute: typeof CalendarRoute
   MoneyRoute: typeof MoneyRoute
   OnboardingRoute: typeof OnboardingRoute
+  ResetPasswordRoute: typeof ResetPasswordRoute
   ReviewRoute: typeof ReviewRoute
   SettingsRoute: typeof SettingsRoute
   StatsRoute: typeof StatsRoute
@@ -217,6 +230,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OnboardingRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/review': {
       id: '/review'
       path: '/review'
@@ -262,6 +282,7 @@ const rootRouteChildren: RootRouteChildren = {
   CalendarRoute: CalendarRoute,
   MoneyRoute: MoneyRoute,
   OnboardingRoute: OnboardingRoute,
+  ResetPasswordRoute: ResetPasswordRoute,
   ReviewRoute: ReviewRoute,
   SettingsRoute: SettingsRoute,
   StatsRoute: StatsRoute,
