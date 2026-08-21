@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Check, PartyPopper, Sparkles } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { ProgressRing } from "@/components/ProgressRing";
@@ -14,6 +14,7 @@ import {
   formatMoney,
   isSunday,
   todayISO,
+  weekNumberForDay,
   type DailyHabit,
 } from "@/lib/challenge";
 import { cn } from "@/lib/utils";
@@ -128,7 +129,19 @@ function TodayPage() {
                   Open this week's review →
                 </Link>
               </div>
-            ) : null}
+            ) : (
+              /* Mobile has no sidebar, so the review needs a way in from the
+                 screen people actually open every day — not only on Sundays. */
+              <Link
+                to="/review"
+                className="flex items-center justify-between rounded-xl border border-input px-4 py-3 text-sm md:hidden"
+              >
+                <span>Week {weekNumberForDay(stats.currentDay)} review</span>
+                <span aria-hidden="true" className="text-muted-foreground">
+                  →
+                </span>
+              </Link>
+            )}
 
             <section className="surface overflow-hidden">
               <div className="flex items-center justify-between border-b border-border px-4 py-3">
@@ -196,6 +209,16 @@ export function HabitCard({
   const [minutes, setMinutes] = useState<string>(String(entry?.certification_minutes ?? ""));
   const [topic, setTopic] = useState<string>(entry?.certification_topic ?? "");
 
+  // Resync when the entry changes underneath us — switching days in the
+  // calendar dialog reuses this component, and a partner's edit can arrive
+  // while it's mounted. Without this the fields keep the first day's values.
+  const savedWalk = entry?.walk_duration ?? null;
+  const savedMinutes = entry?.certification_minutes ?? null;
+  const savedTopic = entry?.certification_topic ?? null;
+  useEffect(() => setWalk(savedWalk === null ? "" : String(savedWalk)), [savedWalk, date]);
+  useEffect(() => setMinutes(savedMinutes === null ? "" : String(savedMinutes)), [savedMinutes, date]);
+  useEffect(() => setTopic(savedTopic ?? ""), [savedTopic, date]);
+
   const toggle = () => mutation.mutate({ date, patch: { [habit.column]: !done } as Partial<DailyHabit> });
 
   return (
@@ -232,7 +255,10 @@ export function HabitCard({
         </button>
       </div>
 
-      {done && habit.key === "walk" ? (
+      {/* Detail fields stay available whether or not the habit is ticked, so a
+          part-done day can still be recorded honestly — 20 of 30 minutes is
+          worth logging without claiming the habit. */}
+      {habit.key === "walk" ? (
         <DetailRow
           label="Minutes walked"
           value={walk}
@@ -241,7 +267,7 @@ export function HabitCard({
         />
       ) : null}
 
-      {done && habit.key === "certification" ? (
+      {habit.key === "certification" ? (
         <div className="mt-3 space-y-2">
           <DetailRow
             label="Minutes studied"

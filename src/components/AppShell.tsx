@@ -1,18 +1,29 @@
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useEffect, type ReactNode } from "react";
-import { CalendarDays, Home, PiggyBank, Settings, TrendingUp } from "lucide-react";
+import { CalendarDays, Home, NotebookPen, PiggyBank, Settings, Sparkles, TrendingUp } from "lucide-react";
 import { useChallengeData, useMyProfile, useSession } from "@/hooks/useChallenge";
 import { buildStats, type CoupleStats } from "@/lib/stats";
 import type { ChallengeData } from "@/hooks/useChallenge";
 import type { Profile } from "@/lib/challenge";
 import { cn } from "@/lib/utils";
 
+/** The five primary destinations — also the mobile bottom bar. */
 const NAV = [
   { to: "/today", label: "Today", icon: Home },
   { to: "/calendar", label: "Calendar", icon: CalendarDays },
   { to: "/stats", label: "Stats", icon: TrendingUp },
   { to: "/money", label: "Money", icon: PiggyBank },
   { to: "/settings", label: "Settings", icon: Settings },
+] as const;
+
+/**
+ * Read less often, and deliberately kept out of the mobile bar — six or seven
+ * tabs on a phone makes the primary five harder to hit. On mobile these are
+ * reached from the Today and Stats pages instead.
+ */
+const SECONDARY_NAV = [
+  { to: "/review", label: "Weekly review", icon: NotebookPen },
+  { to: "/summary", label: "The whole story", icon: Sparkles },
 ] as const;
 
 export interface AppContext {
@@ -98,6 +109,24 @@ export function AppShell({ children }: { children: (ctx: AppContext) => ReactNod
               {label}
             </Link>
           ))}
+
+          <div className="mt-6 border-t border-sidebar-border pt-4">
+            {SECONDARY_NAV.map(({ to, label, icon: Icon }) => (
+              <Link
+                key={to}
+                to={to}
+                className={cn(
+                  "flex items-center gap-3 rounded-xl px-3 py-2 text-sm transition-colors",
+                  pathname === to
+                    ? "bg-sidebar-accent font-medium text-foreground"
+                    : "text-muted-foreground hover:bg-sidebar-accent hover:text-foreground",
+                )}
+              >
+                <Icon className="size-4" />
+                {label}
+              </Link>
+            ))}
+          </div>
         </nav>
         <p className="text-xs text-muted-foreground">Small habits. Together.</p>
       </aside>

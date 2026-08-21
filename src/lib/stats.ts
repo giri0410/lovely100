@@ -145,6 +145,66 @@ export function buildStats(couple: Couple, profiles: Profile[], habits: DailyHab
   } as CoupleStats & { daysElapsed: number };
 }
 
+export interface WeekStats {
+  /** Elapsed days in the week — 7 once the week is over, fewer mid-week. */
+  daysCounted: number;
+  walkDays: number;
+  healthyDays: number;
+  cheatSundays: number;
+  studyMinutes: number;
+  avoided: number;
+  overallPct: number;
+}
+
+/**
+ * One person's numbers for a single week. Extracted so the weekly review shares
+ * the same conventions as the rest of the app — most importantly the 30-minute
+ * fallback for unrecorded study time, and counting a checked Sunday as a cheat
+ * day rather than a healthy one.
+ *
+ * `expenses` is whatever scope the caller wants totalled; the review passes the
+ * whole couple's, matching what it has always shown.
+ */
+export function buildWeekStats(
+  profileStats: ProfileStats | undefined,
+  weekDates: string[],
+  expenses: AvoidedExpense[],
+): WeekStats {
+  const entry = (iso: string) => profileStats?.entriesByDate.get(iso);
+  let walkDays = 0;
+  let healthyDays = 0;
+  let cheatSundays = 0;
+  let studyMinutes = 0;
+  let checks = 0;
+
+  for (const iso of weekDates) {
+    const e = entry(iso);
+    checks += completedCount(e);
+    if (e?.walk_completed) walkDays += 1;
+    if (e?.healthy_food_completed) {
+      if (isSunday(iso)) cheatSundays += 1;
+      else healthyDays += 1;
+    }
+    if (e?.certification_completed) studyMinutes += e.certification_minutes ?? 30;
+  }
+
+  const weekSet = new Set(weekDates);
+  return {
+    daysCounted: weekDates.length,
+    walkDays,
+    healthyDays,
+    cheatSundays,
+    studyMinutes,
+    avoided: expenses.filter((e) => weekSet.has(e.date)).reduce((s, e) => s + Number(e.amount || 0), 0),
+    overallPct: weekDates.length ? Math.round((checks / (weekDates.length * 4)) * 100) : 0,
+  };
+}
+
+/** Whether every day of `week` has already passed. */
+export function isWeekComplete(week: number, currentDay: number): boolean {
+  return currentDay > week * 7;
+}
+
 export function monthlySavings(expenses: AvoidedExpense[]): { label: string; total: number; count: number }[] {
   const map = new Map<string, { total: number; count: number }>();
   for (const e of expenses) {

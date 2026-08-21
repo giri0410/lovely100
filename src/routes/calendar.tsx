@@ -31,8 +31,16 @@ const STATUS_STYLES: Record<DayStatus, string> = {
   completed: "bg-primary text-primary-foreground border-primary",
   partial: "bg-warm/40 border-warm text-foreground",
   missed: "bg-secondary text-muted-foreground border-border",
-  today: "border-primary text-primary ring-2 ring-primary/25",
+  today: "border-primary text-primary",
   future: "border-dashed border-border text-muted-foreground/60",
+};
+
+const STATUS_LABELS: Record<DayStatus, string> = {
+  completed: "all four done",
+  partial: "partly done",
+  missed: "missed",
+  today: "today, nothing logged yet",
+  future: "upcoming",
 };
 
 function CalendarPage() {
@@ -60,26 +68,50 @@ function CalendarPage() {
                   {stats.dates.map((iso, i) => {
                     const count = completedCount(mine?.entriesByDate.get(iso));
                     const status = dayStatus(count, iso, stats.today);
+                    const isToday = iso === stats.today;
+                    const partnerDone = partner
+                      ? completedCount(theirs?.entriesByDate.get(iso)) === 4
+                      : false;
+                    const label = [
+                      `Day ${i + 1}`,
+                      STATUS_LABELS[status],
+                      partner ? (partnerDone ? `${partner.name} completed` : `${partner.name} did not`) : null,
+                    ]
+                      .filter(Boolean)
+                      .join(", ");
+
                     return (
                       <button
                         key={iso}
                         onClick={() => setOpenDate(iso)}
                         className={cn(
-                          "aspect-square rounded-lg border text-[10px] font-semibold transition-transform hover:scale-105",
+                          "relative aspect-square rounded-lg border text-[10px] font-semibold transition-transform hover:scale-105",
                           STATUS_STYLES[status],
+                          // Today reads as a ring so it can also show its own progress.
+                          isToday && "ring-2 ring-primary/40",
                         )}
-                        aria-label={`Day ${i + 1}`}
+                        aria-label={label}
                       >
                         {i + 1}
+                        {partnerDone ? (
+                          <span
+                            aria-hidden="true"
+                            className={cn(
+                              "absolute bottom-0.5 right-0.5 size-1.5 rounded-full",
+                              status === "completed" ? "bg-primary-foreground/80" : "bg-success",
+                            )}
+                          />
+                        ) : null}
                       </button>
                     );
                   })}
                 </div>
                 <div className="mt-4 flex flex-wrap gap-3 text-xs text-muted-foreground">
-                  <Legend className="bg-primary" label="Completed" />
+                  <Legend className="bg-primary" label="You completed" />
                   <Legend className="bg-warm/60" label="Partial" />
                   <Legend className="bg-secondary" label="Missed" />
                   <Legend className="border-2 border-primary" label="Today" />
+                  {partner ? <Legend className="bg-success" label={`${partner.name} completed`} dot /> : null}
                   <Legend className="border border-dashed border-border" label="Upcoming" />
                 </div>
               </div>
@@ -134,10 +166,10 @@ function CalendarPage() {
   );
 }
 
-function Legend({ className, label }: { className: string; label: string }) {
+function Legend({ className, label, dot }: { className: string; label: string; dot?: boolean }) {
   return (
     <span className="flex items-center gap-1.5">
-      <span className={cn("size-3 rounded", className)} />
+      <span className={cn(dot ? "size-1.5 rounded-full" : "size-3 rounded", className)} />
       {label}
     </span>
   );

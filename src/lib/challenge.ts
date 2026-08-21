@@ -135,9 +135,10 @@ export type DayStatus = "completed" | "partial" | "missed" | "today" | "future";
 
 export function dayStatus(count: number, iso: string, today: string): DayStatus {
   if (iso > today) return "future";
-  if (iso === today) return "today";
   if (count === 4) return "completed";
   if (count > 0) return "partial";
+  // An empty today is still ahead of you, not missed.
+  if (iso === today) return "today";
   return "missed";
 }
 

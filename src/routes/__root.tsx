@@ -12,6 +12,7 @@ import { useEffect, type ReactNode } from "react";
 import appCss from "../styles.css?url";
 import { Toaster } from "@/components/ui/sonner";
 import { reportLovableError } from "../lib/lovable-error-reporting";
+import { THEME_INIT_SCRIPT } from "@/lib/theme";
 
 
 function NotFoundComponent() {
@@ -115,9 +116,15 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 
 function RootShell({ children }: { children: ReactNode }) {
   return (
-    <html lang="en">
+    // suppressHydrationWarning is required, not incidental: the inline script
+    // below sets class="dark" on this element before React hydrates, so the
+    // server markup and the client DOM legitimately differ by that one
+    // attribute. It suppresses a single level, so nothing else is masked.
+    <html lang="en" suppressHydrationWarning>
       <head>
         <HeadContent />
+        {/* Runs before first paint so the theme never flashes. */}
+        <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
       </head>
       <body>
         {children}

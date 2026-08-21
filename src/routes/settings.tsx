@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { AppShell, PageHeader } from "@/components/AppShell";
@@ -7,6 +7,12 @@ import * as api from "@/data";
 import { useReminders } from "@/hooks/useChallenge";
 import { Switch } from "@/components/ui/switch";
 import type { Couple, Profile } from "@/lib/challenge";
+import {
+  applyThemePreference,
+  readThemePreference,
+  watchSystemTheme,
+  type ThemePreference,
+} from "@/lib/theme";
 
 export const Route = createFileRoute("/settings")({
   ssr: false,
@@ -22,6 +28,55 @@ export const Route = createFileRoute("/settings")({
   }),
   component: SettingsPage,
 });
+
+const THEME_OPTIONS: { value: ThemePreference; label: string }[] = [
+  { value: "light", label: "Light" },
+  { value: "dark", label: "Dark" },
+  { value: "system", label: "System" },
+];
+
+function AppearanceSection() {
+  const [theme, setTheme] = useState<ThemePreference>("system");
+
+  // Read on mount rather than in useState, so server render and first client
+  // render agree and React doesn't warn about a hydration mismatch.
+  useEffect(() => setTheme(readThemePreference()), []);
+
+  // While on "system", follow the OS if it changes under us.
+  useEffect(() => {
+    if (theme !== "system") return;
+    return watchSystemTheme(() => applyThemePreference("system"));
+  }, [theme]);
+
+  const choose = (next: ThemePreference) => {
+    setTheme(next);
+    applyThemePreference(next);
+  };
+
+  return (
+    <section className="surface space-y-3 p-5">
+      <div>
+        <h2 className="text-lg">Appearance</h2>
+        <p className="text-sm text-muted-foreground">Match your system, or pick one and stay there.</p>
+      </div>
+      <div className="flex gap-2" role="group" aria-label="Theme">
+        {THEME_OPTIONS.map((option) => (
+          <button
+            key={option.value}
+            type="button"
+            aria-pressed={theme === option.value}
+            onClick={() => choose(option.value)}
+            className={`flex-1 rounded-xl border px-3 py-2 text-sm ${
+              theme === option.value ? "border-primary bg-primary/10 font-medium" : "border-input"
+            }`}
+          >
+            {option.label}
+          </button>
+        ))}
+      </div>
+    </section>
+  );
+}
 
 const REMINDER_TYPES = [
   { type: "walk", label: "Morning walk", time: "06:30" },
@@ -158,6 +213,8 @@ function SettingsView({ me, couple }: { me: Profile; couple: Couple }) {
           );
         })}
       </section>
+
+      <AppearanceSection />
 
       <Link
         to="/admin"

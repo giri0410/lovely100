@@ -4,13 +4,8 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { AppShell, PageHeader } from "@/components/AppShell";
 import * as api from "@/data";
-import {
-  completedCount,
-  formatMinutes,
-  formatMoney,
-  isSunday,
-  weekNumberForDay,
-} from "@/lib/challenge";
+import { formatMinutes, formatMoney, weekNumberForDay } from "@/lib/challenge";
+import { buildWeekStats, isWeekComplete } from "@/lib/stats";
 
 export const Route = createFileRoute("/review")({
   ssr: false,
@@ -59,20 +54,8 @@ function ReviewView({
   const weekDates = stats.dates.slice((week - 1) * 7, week * 7).filter((d) => d <= stats.today);
 
   const mine = stats.perProfile.find((p) => p.profile.id === me);
-  const walkDays = weekDates.filter((d) => mine?.entriesByDate.get(d)?.walk_completed).length;
-  const healthy = weekDates.filter((d) => mine?.entriesByDate.get(d)?.healthy_food_completed && !isSunday(d)).length;
-  const cheat = weekDates.filter((d) => mine?.entriesByDate.get(d)?.healthy_food_completed && isSunday(d)).length;
-  const study = weekDates.reduce(
-    (s, d) =>
-      s + (mine?.entriesByDate.get(d)?.certification_completed ? (mine.entriesByDate.get(d)?.certification_minutes ?? 30) : 0),
-    0,
-  );
-  const avoided = data.expenses
-    .filter((e) => weekDates.includes(e.date))
-    .reduce((s, e) => s + Number(e.amount), 0);
-  const overall = weekDates.length
-    ? Math.round((weekDates.reduce((s, d) => s + completedCount(mine?.entriesByDate.get(d)), 0) / (weekDates.length * 4)) * 100)
-    : 0;
+  const summary = buildWeekStats(mine, weekDates, data.expenses);
+  const complete = isWeekComplete(week, stats.currentDay);
 
   const existing = data.reviews.find((r) => r.profile_id === me && r.week_number === week);
   const [well, setWell] = useState(existing?.what_went_well ?? "");
@@ -120,12 +103,17 @@ function ReviewView({
       </div>
 
       <section className="surface space-y-3 p-5">
-        <h2 className="text-lg">Week {week} complete 🎉</h2>
-        <Row label="Morning walk" value={`${walkDays} / ${weekDates.length} days`} />
-        <Row label="Healthy food" value={`${healthy} healthy days + ${cheat} cheat day${cheat === 1 ? "" : "s"}`} />
-        <Row label="Unnecessary spending" value={`${formatMoney(avoided)} avoided`} />
-        <Row label="Certification" value={formatMinutes(study)} />
-        <Row label="Overall" value={`${overall}%`} />
+        <h2 className="text-lg">{complete ? `Week ${week} complete 🎉` : `Week ${week} so far`}</h2>
+        <Row label="Morning walk" value={`${summary.walkDays} / ${summary.daysCounted} days`} />
+        <Row
+          label="Healthy food"
+          value={`${summary.healthyDays} healthy days + ${summary.cheatSundays} cheat day${
+            summary.cheatSundays === 1 ? "" : "s"
+          }`}
+        />
+        <Row label="Unnecessary spending" value={`${formatMoney(summary.avoided)} avoided`} />
+        <Row label="Certification" value={formatMinutes(summary.studyMinutes)} />
+        <Row label="Overall" value={`${summary.overallPct}%`} />
       </section>
 
       <section className="surface space-y-3 p-5">

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { addDays, isSunday, todayISO, type AvoidedExpense, type Couple, type DailyHabit, type Profile } from "./challenge";
-import { buildStats, monthlySavings } from "./stats";
+import { buildStats, buildWeekStats, isWeekComplete, monthlySavings } from "./stats";
 
 /**
  * Fixtures are built relative to the real current date because buildStats reads
@@ -230,6 +230,83 @@ describe("buildStats — the couple view", () => {
     ];
     const stats = buildStats(makeCouple(4), [me, partner], habits, noExpenses);
     expect(stats.totalStudyMinutes).toBe(120);
+  });
+});
+
+describe("buildWeekStats", () => {
+  const me = makeProfile("p1", "Me");
+  // Today is day 8, so week 1 is fully elapsed and week 2 has one day.
+  const days = firstDays(7, 8);
+  const week1 = days.slice(0, 7);
+
+  function statsFor(habits: DailyHabit[], expenses: AvoidedExpense[] = []) {
+    const s = buildStats(makeCouple(7), [me], habits, expenses);
+    return buildWeekStats(s.perProfile[0]!, week1, expenses);
+  }
+
+  it("returns zeroes for a week with nothing logged", () => {
+    const w = statsFor([]);
+    expect(w).toMatchObject({ daysCounted: 7, walkDays: 0, studyMinutes: 0, avoided: 0, overallPct: 0 });
+  });
+
+  it("counts each habit over the week", () => {
+    const habits = week1.slice(0, 5).map((d) => habit("p1", d, { walk_completed: true }));
+    const w = statsFor(habits);
+    expect(w.walkDays).toBe(5);
+    // 5 of 28 possible checks.
+    expect(w.overallPct).toBe(18);
+  });
+
+  it("splits healthy days from cheat Sundays", () => {
+    const habits = week1.map((d) => habit("p1", d, { healthy_food_completed: true }));
+    const w = statsFor(habits);
+    // A calendar week always contains exactly one Sunday.
+    expect(w.cheatSundays).toBe(1);
+    expect(w.healthyDays).toBe(6);
+  });
+
+  it("applies the 30-minute fallback for unrecorded study time", () => {
+    const habits = [
+      habit("p1", week1[0]!, { certification_completed: true, certification_minutes: null }),
+      habit("p1", week1[1]!, { certification_completed: true, certification_minutes: 90 }),
+    ];
+    expect(statsFor(habits).studyMinutes).toBe(120);
+  });
+
+  it("only totals expenses dated inside the week", () => {
+    const inside: AvoidedExpense = {
+      id: "a", profile_id: "p1", date: week1[2]!, amount: 400, description: null, reason: null,
+    };
+    const outside: AvoidedExpense = {
+      id: "b", profile_id: "p1", date: days[7]!, amount: 900, description: null, reason: null,
+    };
+    expect(statsFor([], [inside, outside]).avoided).toBe(400);
+  });
+
+  it("scores a fully completed week at 100%", () => {
+    const habits = week1.map((d) => habit("p1", d, ALL_FOUR));
+    expect(statsFor(habits).overallPct).toBe(100);
+  });
+
+  it("handles an undefined profile without throwing", () => {
+    expect(buildWeekStats(undefined, week1, []).overallPct).toBe(0);
+  });
+});
+
+describe("isWeekComplete", () => {
+  it("is false while the week is still running", () => {
+    expect(isWeekComplete(1, 1)).toBe(false);
+    // Day 7 is the final day of week 1 — not over until it has passed.
+    expect(isWeekComplete(1, 7)).toBe(false);
+  });
+
+  it("is true once every day of the week has passed", () => {
+    expect(isWeekComplete(1, 8)).toBe(true);
+    expect(isWeekComplete(2, 15)).toBe(true);
+  });
+
+  it("is false for a week that hasn't started", () => {
+    expect(isWeekComplete(3, 8)).toBe(false);
   });
 });
 

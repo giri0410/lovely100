@@ -137,11 +137,17 @@ describe("dayStatus", () => {
     expect(dayStatus(0, "2026-05-09", today)).toBe("missed");
   });
 
-  it("labels today as 'today' even once all four are done", () => {
-    // Known quirk: the `today` branch is checked before `completed`, so a
-    // finished today never renders as completed. Phase 1 changes this — when it
-    // does, this expectation should flip to "completed".
-    expect(dayStatus(4, today, today)).toBe("today");
+  it("shows a finished today as completed, not merely as today", () => {
+    expect(dayStatus(4, today, today)).toBe("completed");
+  });
+
+  it("shows a part-done today by its progress", () => {
+    expect(dayStatus(2, today, today)).toBe("partial");
+  });
+
+  it("keeps an untouched today as 'today' rather than missed", () => {
+    // The day isn't over, so it hasn't been missed.
+    expect(dayStatus(0, today, today)).toBe("today");
   });
 });
 
