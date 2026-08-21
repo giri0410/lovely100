@@ -188,7 +188,9 @@ function SettingsView({ me, couple }: { me: Profile; couple: Couple }) {
       <section className="surface space-y-4 p-5">
         <div>
           <h2 className="text-lg">Reminders</h2>
-          <p className="text-sm text-muted-foreground">Choose your own times — nothing is hardcoded.</p>
+          <p className="text-sm text-muted-foreground">
+            Sent by email, at your times. We skip the ones you've already done.
+          </p>
         </div>
         {REMINDER_TYPES.map((r) => {
           const saved = reminders.data?.find((x) => x.reminder_type === r.type);
