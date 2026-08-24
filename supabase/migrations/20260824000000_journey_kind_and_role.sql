@@ -105,7 +105,13 @@ GRANT EXECUTE ON FUNCTION public.create_couple_with_profile(text, text, text, te
 
 COMMIT;
 
--- Note: the 3-argument create_couple_with_profile(text,text,text) still exists
--- as a separate overload, so the currently deployed frontend keeps working
--- until it is updated. Drop it once the new signature has shipped:
---   DROP FUNCTION IF EXISTS public.create_couple_with_profile(text, text, text);
+-- CORRECTION (see 20260824002000): the note that used to sit here claimed the
+-- surviving 3-argument overload kept the deployed frontend working. It did the
+-- opposite. Adding _kind via CREATE OR REPLACE created a second function rather
+-- than replacing the first, so a 3-argument call matched both candidates and
+-- PostgREST rejected it with PGRST203 instead of choosing — breaking onboarding
+-- for every new signup until the 4-argument frontend shipped.
+--
+-- Left here rather than quietly deleted: "CREATE OR REPLACE plus a new
+-- parameter" reads like an in-place change and is not one. Migration
+-- 20260824002000 drops the stale signature.
