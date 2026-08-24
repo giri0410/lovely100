@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { auth } from "@/data";
@@ -166,6 +166,12 @@ function AuthPage() {
               </button>
             </>
           )}
+        </p>
+
+        <p className="mt-6 text-center text-xs text-muted-foreground">
+          <Link to="/privacy" className="underline-offset-4 hover:text-foreground hover:underline">
+            Privacy policy
+          </Link>
         </p>
       </div>
     </div>

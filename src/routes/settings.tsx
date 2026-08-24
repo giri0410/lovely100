@@ -308,6 +308,13 @@ function SettingsView({ me, couple }: { me: Profile; couple: Couple }) {
         Sign out
       </button>
 
+      <Link
+        to="/privacy"
+        className="block w-full py-2 text-center text-sm text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
+      >
+        Privacy policy
+      </Link>
+
       <DeleteAccountSection name={me.name} />
 
     </div>
