@@ -6,15 +6,16 @@ import { AppShell, PageHeader } from "@/components/AppShell";
 import * as api from "@/data";
 import { formatMinutes, formatMoney, weekNumberForDay } from "@/lib/challenge";
 import { buildWeekStats, isWeekComplete } from "@/lib/stats";
+import { copy } from "@/lib/copy";
 
 export const Route = createFileRoute("/review")({
   ssr: false,
   head: () => ({
     meta: [
-      { title: "Weekly Review — 100 Days Together" },
+      { title: "Weekly Review — Lovely 100" },
       { name: "description", content: "Your Sunday summary: walks, healthy days, money avoided, study time and notes for next week." },
-      { property: "og:title", content: "Weekly Review — 100 Days Together" },
-      { property: "og:description", content: "Reflect together every Sunday and plan the week ahead." },
+      { property: "og:title", content: "Weekly Review — Lovely 100" },
+      { property: "og:description", content: "Look back every Sunday and plan the week ahead." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
@@ -54,6 +55,7 @@ function ReviewView({
   const weekDates = stats.dates.slice((week - 1) * 7, week * 7).filter((d) => d <= stats.today);
 
   const mine = stats.perProfile.find((p) => p.profile.id === me);
+  const t = copy({ kind: data.couple.kind, memberCount: stats.perProfile.length });
   const summary = buildWeekStats(mine, weekDates, data.expenses);
   const complete = isWeekComplete(week, stats.currentDay);
 
@@ -86,7 +88,7 @@ function ReviewView({
 
   return (
     <div className="space-y-5 px-5 pb-8">
-      <PageHeader title={`Week ${week} review`} subtitle="A gentle look back, and a plan for the week ahead." />
+      <PageHeader title={`Week ${week} review`} subtitle={t.reviewSubtitle} />
 
       <div className="flex flex-wrap gap-2 px-0">
         {weeks.map((w) => (
@@ -128,7 +130,7 @@ function ReviewView({
           />
         </label>
         <label className="block text-sm">
-          <span className="text-muted-foreground">What should we improve next week?</span>
+          <span className="text-muted-foreground">{t.reviewImprovePrompt}</span>
           <textarea
             value={improve}
             onChange={(e) => setImprove(e.target.value)}

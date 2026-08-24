@@ -18,9 +18,9 @@ export const Route = createFileRoute("/settings")({
   ssr: false,
   head: () => ({
     meta: [
-      { title: "Settings — 100 Days Together" },
+      { title: "Settings — Lovely 100" },
       { name: "description", content: "Manage your profile, challenge start date, partner invite code and daily reminders." },
-      { property: "og:title", content: "Settings — 100 Days Together" },
+      { property: "og:title", content: "Settings — Lovely 100" },
       { property: "og:description", content: "Profile, challenge and reminder settings." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -218,7 +218,9 @@ function SettingsView({ me, couple }: { me: Profile; couple: Couple }) {
           onChange={(e) => setName(e.target.value)}
           className="w-full rounded-xl border border-input bg-background px-3 py-2.5 outline-none focus:border-primary"
         />
-        <p className="text-sm text-muted-foreground capitalize">Role: {me.relationship}</p>
+        {me.relationship ? (
+          <p className="text-sm text-muted-foreground capitalize">Role: {me.relationship}</p>
+        ) : null}
         <button
           onClick={() => saveProfile.mutate()}
           className="rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground"

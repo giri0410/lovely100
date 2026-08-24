@@ -1,3 +1,5 @@
+import type { JourneyKind } from "./copy";
+
 export type HabitKey = "walk" | "food" | "spending" | "certification";
 
 export interface HabitDef {
@@ -41,7 +43,8 @@ export interface Profile {
   auth_user_id: string | null;
   couple_id: string;
   name: string;
-  relationship: string;
+  /** Optional. Someone doing their 100 days alone has no relationship to state. */
+  relationship: string | null;
   avatar: string | null;
 }
 
@@ -52,6 +55,12 @@ export interface Couple {
   duration: number;
   invite_code: string;
   is_demo: boolean;
+  /**
+   * Whether this journey is meant for one person or two. Stored rather than
+   * derived from member count, because a shared journey with an unaccepted
+   * invite has one member and would otherwise read as solo until they join.
+   */
+  kind: JourneyKind;
 }
 
 export interface AvoidedExpense {

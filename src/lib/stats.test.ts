@@ -1,13 +1,14 @@
 import { describe, expect, it } from "vitest";
 import { addDays, isSunday, todayISO, type AvoidedExpense, type Couple, type DailyHabit, type Profile } from "./challenge";
 import { buildStats, buildWeekStats, isWeekComplete, monthlySavings } from "./stats";
+import type { JourneyKind } from "./copy";
 
 /**
  * Fixtures are built relative to the real current date because buildStats reads
  * todayISO() internally. A challenge that started `daysAgo` days ago puts today
  * on day `daysAgo + 1`.
  */
-function makeCouple(daysAgo: number, duration = 100): Couple {
+function makeCouple(daysAgo: number, duration = 100, kind: JourneyKind = "shared"): Couple {
   return {
     id: "couple-1",
     name: "Test couple",
@@ -15,6 +16,7 @@ function makeCouple(daysAgo: number, duration = 100): Couple {
     duration,
     invite_code: "TEST01",
     is_demo: false,
+    kind,
   };
 }
 

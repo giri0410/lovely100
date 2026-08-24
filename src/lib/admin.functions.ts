@@ -136,7 +136,7 @@ export const updateUserProfile = createServerFn({ method: "POST" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { error } = await supabaseAdmin
       .from("profiles")
-      .update({ name: data.name.trim(), relationship: data.relationship.trim() })
+      .update({ name: data.name.trim(), relationship: data.relationship.trim() || null })
       .eq("id", data.profileId);
     if (error) throw new Error(error.message);
     return { ok: true };

@@ -16,10 +16,10 @@ const LAST_UPDATED = "24 August 2026";
 export const Route = createFileRoute("/privacy")({
   head: () => ({
     meta: [
-      { title: "Privacy Policy — 100 Days Together" },
+      { title: "Privacy Policy — Lovely 100" },
       {
         name: "description",
-        content: "What 100 Days Together collects, what your partner can see, and how to delete it all.",
+        content: "What Lovely 100 collects, what your partner can see, and how to delete it all.",
       },
     ],
   }),
@@ -29,7 +29,7 @@ export const Route = createFileRoute("/privacy")({
 function PrivacyPage() {
   return (
     <div className="mx-auto max-w-2xl px-5 py-12">
-      <p className="eyebrow">100 Days Together</p>
+      <p className="eyebrow">Lovely 100</p>
       <h1 className="mt-1 font-display text-3xl">Privacy Policy</h1>
       <p className="mt-2 text-sm text-muted-foreground">Last updated {LAST_UPDATED}</p>
 

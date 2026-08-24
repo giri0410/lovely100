@@ -82,15 +82,15 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       // viewport-fit=cover lets the layout reach under the notch and home
       // indicator; the safe-area padding below keeps content clear of them.
       { name: "viewport", content: "width=device-width, initial-scale=1, viewport-fit=cover" },
-      { title: "100 Days Together" },
+      { title: "Lovely 100" },
       {
         name: "description",
-        content: "A 100-day habit challenge for couples: walking, healthy food, mindful spending and daily study.",
+        content: "Set your own goals and track 100 days — on your own or with someone.",
       },
-      { property: "og:title", content: "100 Days Together" },
+      { property: "og:title", content: "Lovely 100" },
       {
         property: "og:description",
-        content: "Small habits. Better health. Stronger discipline. Together.",
+        content: "Small habits, 100 days, and the story you keep.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },

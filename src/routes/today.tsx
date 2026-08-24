@@ -18,14 +18,15 @@ import {
   type DailyHabit,
 } from "@/lib/challenge";
 import { cn } from "@/lib/utils";
+import { copy } from "@/lib/copy";
 
 export const Route = createFileRoute("/today")({
   ssr: false,
   head: () => ({
     meta: [
-      { title: "Today — 100 Days Together" },
+      { title: "Today — Lovely 100" },
       { name: "description", content: "Your four daily habits for today: walk, healthy food, mindful spending and certification study." },
-      { property: "og:title", content: "Today — 100 Days Together" },
+      { property: "og:title", content: "Today — Lovely 100" },
       { property: "og:description", content: "Check off today's four habits and see how your partner is doing." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -39,6 +40,7 @@ function TodayPage() {
     <AppShell>
       {({ me, data, stats, partner }) => {
         const today = todayISO();
+        const t = copy({ kind: data.couple.kind, memberCount: stats.perProfile.length });
         const mine = stats.perProfile.find((p) => p.profile.id === me.id);
         const theirs = stats.perProfile.find((p) => p.profile.id === partner?.id);
         const myEntry = mine?.entriesByDate.get(today);
@@ -51,12 +53,12 @@ function TodayPage() {
         return (
           <div className="space-y-5 px-5 pb-8 pt-7">
             <header className="animate-rise">
-              <p className="eyebrow">100 Days Together</p>
+              <p className="eyebrow">Lovely 100</p>
               <h1 className="mt-1 text-2xl">
                 Day {stats.currentDay} — {formatLongDate(today)}
               </h1>
               <p className="mt-1 text-sm text-muted-foreground">
-                Small habits. Better health. Stronger discipline. Together.
+                {t.todaySubtitle}
               </p>
             </header>
 
@@ -81,7 +83,7 @@ function TodayPage() {
               />
               <div className="flex-1 space-y-3">
                 <div>
-                  <p className="eyebrow">Team score</p>
+                  <p className="eyebrow">{t.scoreLabel}</p>
                   <p className="font-display text-3xl">{stats.teamScore}%</p>
                 </div>
                 <div className="grid grid-cols-2 gap-3 text-sm">
@@ -145,7 +147,7 @@ function TodayPage() {
 
             <section className="surface overflow-hidden">
               <div className="flex items-center justify-between border-b border-border px-4 py-3">
-                <h2 className="text-base">Together today</h2>
+                <h2 className="text-base">{t.todayTableTitle}</h2>
                 <Sparkles className="size-4 text-primary" />
               </div>
               <table className="w-full text-sm">
@@ -153,7 +155,11 @@ function TodayPage() {
                   <tr className="text-muted-foreground">
                     <th className="px-4 py-2 text-left font-medium">Habit</th>
                     <th className="px-2 py-2 text-center font-medium">{me.name}</th>
-                    <th className="px-2 py-2 text-center font-medium">{partner?.name ?? "Partner"}</th>
+                    {/* No column at all without a partner — a column of "·" is
+                        just a reminder of an absence. */}
+                    {partner ? (
+                      <th className="px-2 py-2 text-center font-medium">{partner.name}</th>
+                    ) : null}
                   </tr>
                 </thead>
                 <tbody>
@@ -161,9 +167,9 @@ function TodayPage() {
                     <tr key={h.key} className="border-t border-border/70">
                       <td className="px-4 py-2.5">{h.label}</td>
                       <td className="px-2 py-2.5 text-center">{myEntry?.[h.column] ? "✓" : "—"}</td>
-                      <td className="px-2 py-2.5 text-center">
-                        {partner ? (partnerEntry?.[h.column] ? "✓" : "—") : "·"}
-                      </td>
+                      {partner ? (
+                        <td className="px-2 py-2.5 text-center">{partnerEntry?.[h.column] ? "✓" : "—"}</td>
+                      ) : null}
                     </tr>
                   ))}
                 </tbody>
@@ -171,7 +177,7 @@ function TodayPage() {
               <p className="border-t border-border bg-accent/40 px-4 py-3 text-sm text-accent-foreground">
                 {partner
                   ? encouragement(bothDone, myCount, stats.currentDay)
-                  : "Invite your partner from Settings to track this together."}
+                  : t.soloFooter}
               </p>
             </section>
           </div>

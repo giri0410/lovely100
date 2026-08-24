@@ -11,10 +11,10 @@ export const Route = createFileRoute("/money")({
   ssr: false,
   head: () => ({
     meta: [
-      { title: "Money We Didn't Spend — 100 Days Together" },
-      { name: "description", content: "Log unnecessary purchases you avoided and see the potential money saved together." },
-      { property: "og:title", content: "Money We Didn't Spend — 100 Days Together" },
-      { property: "og:description", content: "Track avoided purchases and build financial discipline as a couple." },
+      { title: "Money We Didn't Spend — Lovely 100" },
+      { name: "description", content: "Log unnecessary purchases you avoided and see the potential money saved." },
+      { property: "og:title", content: "Money We Didn't Spend — Lovely 100" },
+      { property: "og:description", content: "Track avoided purchases and build financial discipline." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],

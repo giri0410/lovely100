@@ -10,6 +10,7 @@
  */
 import type { AvoidedExpense, Couple, DailyHabit, Profile } from "@/lib/challenge";
 import { todayISO } from "@/lib/challenge";
+import type { JourneyKind } from "@/lib/copy";
 import {
   createSeedDatabase,
   uid,
@@ -160,16 +161,18 @@ export async function createCouple(input: {
   name: string;
   coupleName: string;
   relationship: string;
+  kind: JourneyKind;
 }): Promise<Couple> {
   hydrate();
   await delay(null);
   const couple: Couple = {
     id: uid("couple"),
-    name: input.coupleName || `${input.name}'s challenge`,
+    name: input.coupleName || `${input.name}'s 100 days`,
     start_date: todayISO(),
     duration: 100,
     invite_code: uid("").slice(1, 7).toUpperCase(),
     is_demo: false,
+    kind: input.kind,
   };
   db.couples.push(couple);
   db.profiles.push({
@@ -177,7 +180,7 @@ export async function createCouple(input: {
     auth_user_id: input.userId,
     couple_id: couple.id,
     name: input.name,
-    relationship: input.relationship,
+    relationship: input.relationship.trim() || null,
     avatar: null,
   });
   persist();
@@ -194,12 +197,14 @@ export async function joinCouple(input: {
   await delay(null);
   const couple = db.couples.find((c) => c.invite_code === input.inviteCode.trim().toUpperCase());
   if (!couple) throw new Error("We couldn't find that invite code");
+  // Joining makes a journey shared regardless of how it was created.
+  couple.kind = "shared";
   db.profiles.push({
     id: uid("profile"),
     auth_user_id: input.userId,
     couple_id: couple.id,
     name: input.name,
-    relationship: input.relationship,
+    relationship: input.relationship.trim() || null,
     avatar: null,
   });
   persist();

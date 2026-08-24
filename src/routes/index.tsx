@@ -5,16 +5,16 @@ import { auth } from "@/data";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "100 Days Together — A Couple's Habit Challenge" },
+      { title: "Lovely 100 — 100 days, your goals" },
       {
         name: "description",
         content:
-          "A 100-day challenge for two: morning walks, healthy food, mindful spending and daily certification study — tracked together.",
+          "Set your own goals across health, cooking, travel, learning and money. Track 100 days solo or with someone, and keep the story.",
       },
-      { property: "og:title", content: "100 Days Together — A Couple's Habit Challenge" },
+      { property: "og:title", content: "Lovely 100 — 100 days, your goals" },
       {
         property: "og:description",
-        content: "Small habits. Better health. Stronger discipline. Together for 100 days.",
+        content: "Pick what matters to you, show up for 100 days, and keep the story.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -24,10 +24,10 @@ export const Route = createFileRoute("/")({
 });
 
 const PILLARS = [
-  { emoji: "🚶", title: "Morning Walk", copy: "30 minutes to start the day awake and together." },
-  { emoji: "🥗", title: "Healthy Food", copy: "Follow the plan Monday to Saturday. Sunday is your cheat day — at home." },
-  { emoji: "💸", title: "Mindful Spending", copy: "Log what you chose not to buy and watch it add up." },
-  { emoji: "📘", title: "Certification", copy: "30 minutes of learning, every single day." },
+  { emoji: "🚶", title: "Health", copy: "Walks, workouts, sleep — whatever moving well looks like for you." },
+  { emoji: "🍳", title: "Cooking & food", copy: "Eat better, or work through the recipes you keep meaning to try." },
+  { emoji: "✈️", title: "Places & memories", copy: "Log the trips, the small outings, the days worth keeping." },
+  { emoji: "📘", title: "Learning & money", copy: "Study a little every day, and track what you chose not to spend." },
 ];
 
 function Landing() {
@@ -43,17 +43,17 @@ function Landing() {
     <div className="min-h-screen bg-background">
       <main className="mx-auto max-w-3xl px-6 py-16">
         <section className="animate-rise text-center">
-          <p className="eyebrow">A challenge for two</p>
-          <h1 className="mt-3 font-display text-4xl leading-tight sm:text-5xl">100 Days Together</h1>
+          <p className="eyebrow">100 days, your goals</p>
+          <h1 className="mt-3 font-display text-4xl leading-tight sm:text-5xl">Lovely 100</h1>
           <p className="mx-auto mt-4 max-w-md text-muted-foreground">
-            Small habits. Better health. Stronger discipline. Together.
+            Pick what matters to you, show up for 100 days, and keep the story.
           </p>
           <div className="mt-8 flex flex-wrap justify-center gap-3">
             <Link
               to="/auth"
               className="rounded-full bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground shadow-[var(--shadow-soft)]"
             >
-              Start our 100 days
+              Start my 100 days
             </Link>
             <Link to="/auth" className="rounded-full border border-input px-6 py-3 text-sm font-medium">
               I already have an account
@@ -72,10 +72,11 @@ function Landing() {
         </section>
 
         <section className="surface mt-8 p-6 text-center">
-          <h2 className="text-xl">One team, never a scoreboard</h2>
+          <h2 className="text-xl">Do it alone, or bring someone</h2>
           <p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">
-            Both of you check off the same four habits each day. You'll see each other's progress, a shared team score,
-            streaks, money you didn't spend and every hour you studied — with 30 seconds of effort a day.
+            Start on your own and it stays yours. Share an invite code and you'll see each other's progress and
+            streaks — never a scoreboard. Either way it takes about 30 seconds a day, and at Day 100 you get the
+            whole story back.
           </p>
         </section>
       </main>

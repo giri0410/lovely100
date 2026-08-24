@@ -20,9 +20,9 @@ export const Route = createFileRoute("/admin")({
   ssr: false,
   head: () => ({
     meta: [
-      { title: "Admin — 100 Days Together" },
-      { name: "description", content: "Manage member accounts, roles and profiles for the 100 Days Together challenge." },
-      { property: "og:title", content: "Admin — 100 Days Together" },
+      { title: "Admin — Lovely 100" },
+      { name: "description", content: "Manage member accounts, roles and profiles for the Lovely 100 challenge." },
+      { property: "og:title", content: "Admin — Lovely 100" },
       { property: "og:description", content: "Member and role administration." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -189,7 +189,7 @@ function AdminConsole({ currentUserId }: { currentUserId: string }) {
                     <p className="truncate font-medium">{u.name ?? "No profile"}</p>
                     <p className="truncate text-sm text-muted-foreground">{u.email ?? "—"}</p>
                     <p className="mt-1 text-xs text-muted-foreground">
-                      {u.coupleName ? `${u.coupleName} · ${u.relationship}` : "Not part of a couple"}
+                      {u.coupleName ? [u.coupleName, u.relationship].filter(Boolean).join(" · ") : "No journey yet"}
                     </p>
                     <p className="mt-1 text-xs text-muted-foreground">
                       Joined {new Date(u.createdAt).toLocaleDateString()}
@@ -313,7 +313,7 @@ function EditDialog({
       onOpenChange={(o) => {
         if (o && user) {
           setName(user.name ?? "");
-          setRelationship(user.relationship ?? "partner");
+          setRelationship(user.relationship ?? "");
         }
         if (!o) onClose();
       }}
@@ -337,7 +337,7 @@ function EditDialog({
           <button
             className="rounded-full bg-primary px-4 py-2 text-sm font-medium text-primary-foreground disabled:opacity-60"
             disabled={pending || !name.trim()}
-            onClick={() => onSave(name, relationship || "partner")}
+            onClick={() => onSave(name, relationship)}
           >
             {pending ? "Saving…" : "Save changes"}
           </button>

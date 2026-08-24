@@ -124,6 +124,7 @@ export function createSeedDatabase(): MockDatabase {
     duration: 100,
     invite_code: "ALPR26",
     is_demo: true,
+    kind: "shared",
   };
 
   const profiles: Profile[] = [

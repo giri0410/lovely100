@@ -3,16 +3,17 @@ import { AppShell, PageHeader } from "@/components/AppShell";
 import { ProgressRing } from "@/components/ProgressRing";
 import { formatMinutes, formatMoney } from "@/lib/challenge";
 import { monthlySavings } from "@/lib/stats";
+import { copy } from "@/lib/copy";
 import type { ProfileStats } from "@/lib/stats";
 
 export const Route = createFileRoute("/stats")({
   ssr: false,
   head: () => ({
     meta: [
-      { title: "Statistics — 100 Days Together" },
-      { name: "description", content: "Habit-by-habit statistics: walks, healthy days, money avoided, study hours and streaks." },
-      { property: "og:title", content: "Statistics — 100 Days Together" },
-      { property: "og:description", content: "Track walks, healthy eating, mindful spending and study hours." },
+      { title: "Statistics — Lovely 100" },
+      { name: "description", content: "Goal-by-goal statistics: streaks, consistency, money avoided and study hours." },
+      { property: "og:title", content: "Statistics — Lovely 100" },
+      { property: "og:description", content: "See how your 100 days are going." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
@@ -26,13 +27,17 @@ function StatsPage() {
       {({ stats, data, me }) => {
         const months = monthlySavings(data.expenses);
         const maxMonth = Math.max(1, ...months.map((m) => m.total));
+        const t = copy({ kind: data.couple.kind, memberCount: stats.perProfile.length });
         return (
           <div className="space-y-5 px-5 pb-8">
-            <PageHeader title="Our statistics" subtitle="Progress you're building together, never a competition." />
+            <PageHeader title={t.statsTitle} subtitle={t.statsSubtitle} />
 
             <section className="surface flex flex-col items-center gap-4 p-5 sm:flex-row">
-              <ProgressRing value={stats.teamScore} size={128} sublabel="Team score" />
+              <ProgressRing value={stats.teamScore} size={128} sublabel={t.scoreRingSublabel} />
               <div className="flex-1 space-y-2 text-sm">
+                {/* With one member this list is a single bar, and the summary
+                    line below drops the "together" framing entirely — the score
+                    is that person's own consistency, so say so. */}
                 {stats.perProfile.map((p) => (
                   <div key={p.profile.id}>
                     <div className="flex justify-between">
@@ -48,9 +53,10 @@ function StatsPage() {
                   </div>
                 ))}
                 <p className="pt-1 text-muted-foreground">
-                  Together: {stats.teamScore}% · 🔥 {stats.coupleStreak.current} day streak (best{" "}
-                  {stats.coupleStreak.best})
+                  {t.together ? `Together: ${stats.teamScore}% · ` : ""}🔥 {stats.coupleStreak.current} day streak
+                  (best {stats.coupleStreak.best})
                 </p>
+                {t.inviteNudge ? <p className="text-xs text-muted-foreground">{t.inviteNudge}</p> : null}
               </div>
             </section>
 

@@ -7,6 +7,7 @@
  */
 import { supabase } from "@/integrations/supabase/client";
 import type { AvoidedExpense, Couple, DailyHabit, Profile } from "@/lib/challenge";
+import type { JourneyKind } from "@/lib/copy";
 
 /**
  * Admin operations run as TanStack server functions, which only exist when a
@@ -100,11 +101,13 @@ export async function createCouple(input: {
   name: string;
   coupleName: string;
   relationship: string;
+  kind: JourneyKind;
 }): Promise<Couple> {
   const { data, error } = await supabase.rpc("create_couple_with_profile", {
     _couple_name: input.coupleName,
     _profile_name: input.name,
     _relationship: input.relationship,
+    _kind: input.kind,
   });
   if (error) throw new Error(error.message);
   return data as Couple;

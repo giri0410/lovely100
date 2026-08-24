@@ -7,9 +7,9 @@ export const Route = createFileRoute("/auth")({
   ssr: false,
   head: () => ({
     meta: [
-      { title: "Sign in — 100 Days Together" },
+      { title: "Sign in — Lovely 100" },
       { name: "description", content: "Sign in to track your 100-day couple habit challenge for health, food, money and learning." },
-      { property: "og:title", content: "Sign in — 100 Days Together" },
+      { property: "og:title", content: "Sign in — Lovely 100" },
       { property: "og:description", content: "Sign in to your shared 100-day challenge." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -61,7 +61,7 @@ function AuthPage() {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background px-5 py-10">
         <div className="w-full max-w-sm text-center">
-          <p className="eyebrow">100 Days</p>
+          <p className="eyebrow">Lovely 100</p>
           <h1 className="mt-1 font-display text-3xl">Check your email</h1>
           <p className="mt-3 text-sm text-muted-foreground">
             If an account exists for <span className="font-medium text-foreground">{email}</span>, we've sent a
@@ -86,12 +86,12 @@ function AuthPage() {
     <div className="flex min-h-screen items-center justify-center bg-background px-5 py-10">
       <div className="w-full max-w-sm">
         <div className="text-center">
-          <p className="eyebrow">100 Days</p>
+          <p className="eyebrow">Lovely 100</p>
           <h1 className="mt-1 font-display text-3xl">{heading}</h1>
           <p className="mt-2 text-sm text-muted-foreground">
             {mode === "forgot"
               ? "Enter your email and we'll send you a link to set a new one."
-              : "Small habits. Better health. Stronger discipline. Together."}
+              : "Small habits, 100 days, and the story you keep."}
           </p>
         </div>
 

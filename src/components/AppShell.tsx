@@ -90,8 +90,7 @@ export function AppShell({ children }: { children: (ctx: AppContext) => ReactNod
     <div className="min-h-screen bg-background md:flex">
       <aside className="sticky top-0 hidden h-screen w-64 shrink-0 flex-col border-r border-border bg-sidebar p-6 md:flex">
         <div>
-          <p className="eyebrow">100 Days</p>
-          <h1 className="font-display text-xl leading-tight">Together</h1>
+          <h1 className="font-display text-xl leading-tight">Lovely 100</h1>
         </div>
         <nav className="mt-8 flex flex-1 flex-col gap-1">
           {NAV.map(({ to, label, icon: Icon }) => (
@@ -128,7 +127,7 @@ export function AppShell({ children }: { children: (ctx: AppContext) => ReactNod
             ))}
           </div>
         </nav>
-        <p className="text-xs text-muted-foreground">Small habits. Together.</p>
+        <p className="text-xs text-muted-foreground">Small habits, kept.</p>
       </aside>
 
       <main className="mx-auto w-full max-w-3xl flex-1 pb-24 md:pb-10">{body}</main>
@@ -163,7 +162,7 @@ export function AppShell({ children }: { children: (ctx: AppContext) => ReactNod
 export function PageHeader({ title, subtitle }: { title: string; subtitle?: string }) {
   return (
     <header className="px-5 pb-2 pt-7">
-      <p className="eyebrow">100 Days Together</p>
+      <p className="eyebrow">Lovely 100</p>
       <h1 className="mt-1 text-2xl">{title}</h1>
       {subtitle ? <p className="mt-1 text-sm text-muted-foreground">{subtitle}</p> : null}
     </header>

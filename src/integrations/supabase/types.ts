@@ -69,6 +69,7 @@ export type Database = {
           id: string
           invite_code: string
           is_demo: boolean
+          kind: string
           name: string
           start_date: string
         }
@@ -78,6 +79,7 @@ export type Database = {
           id?: string
           invite_code?: string
           is_demo?: boolean
+          kind?: string
           name: string
           start_date?: string
         }
@@ -87,6 +89,7 @@ export type Database = {
           id?: string
           invite_code?: string
           is_demo?: boolean
+          kind?: string
           name?: string
           start_date?: string
         }
@@ -166,7 +169,7 @@ export type Database = {
           created_at: string
           id: string
           name: string
-          relationship: string
+          relationship: string | null
         }
         Insert: {
           auth_user_id?: string | null
@@ -175,7 +178,7 @@ export type Database = {
           created_at?: string
           id?: string
           name: string
-          relationship?: string
+          relationship?: string | null
         }
         Update: {
           auth_user_id?: string | null
@@ -184,7 +187,7 @@ export type Database = {
           created_at?: string
           id?: string
           name?: string
-          relationship?: string
+          relationship?: string | null
         }
         Relationships: [
           {
@@ -307,6 +310,7 @@ export type Database = {
           _couple_name: string
           _profile_name: string
           _relationship: string
+          _kind: string
         }
         Returns: Database["public"]["Tables"]["couples"]["Row"]
       }

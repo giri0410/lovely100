@@ -1,15 +1,16 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { AppShell, PageHeader } from "@/components/AppShell";
 import { ProgressRing } from "@/components/ProgressRing";
+import { copy } from "@/lib/copy";
 import { MILESTONES, completedCount, formatMinutes, formatMoney, formatShortDate } from "@/lib/challenge";
 
 export const Route = createFileRoute("/summary")({
   ssr: false,
   head: () => ({
     meta: [
-      { title: "Our 100-Day Journey — 100 Days Together" },
+      { title: "The whole story — Lovely 100" },
       { name: "description", content: "The final report of your 100-day challenge: walks, healthy days, money avoided, study hours and streaks." },
-      { property: "og:title", content: "Our 100-Day Journey — 100 Days Together" },
+      { property: "og:title", content: "The whole story — Lovely 100" },
       { property: "og:description", content: "A side-by-side look at everything you built together." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -25,14 +26,15 @@ function SummaryPage() {
         const done = stats.currentDay >= data.couple.duration;
         const totalWalks = stats.perProfile.reduce((s, p) => s + p.walk.days, 0);
         const totalHealthy = stats.perProfile.reduce((s, p) => s + p.food.healthyDays + p.food.cheatSundays, 0);
+        const t = copy({ kind: data.couple.kind, memberCount: stats.perProfile.length });
 
         return (
           <div className="space-y-5 px-5 pb-8">
             <PageHeader
-              title={done ? "100 Days Completed ❤️" : "Our 100-Day Journey"}
+              title={done ? t.summaryDoneTitle : t.summaryTitle}
               subtitle={
                 done
-                  ? "Look at everything you built together."
+                  ? t.summaryDoneSubtitle
                   : `Day ${stats.currentDay} of ${data.couple.duration} — here's the story so far.`
               }
             />
@@ -44,8 +46,8 @@ function SummaryPage() {
                 <Stat label="Healthy days" value={`${totalHealthy}`} />
                 <Stat label="Money avoided" value={formatMoney(stats.totalSaved)} />
                 <Stat label="Certification" value={formatMinutes(stats.totalStudyMinutes)} />
-                <Stat label="Best couple streak" value={`${stats.coupleStreak.best} days`} />
-                <Stat label="Perfect days together" value={`${stats.completedDaysTogether}`} />
+                <Stat label={t.bestStreakLabel} value={`${stats.coupleStreak.best} days`} />
+                <Stat label={t.perfectDaysLabel} value={`${stats.completedDaysTogether}`} />
               </div>
             </section>
 
@@ -69,7 +71,7 @@ function SummaryPage() {
             </section>
 
             <section className="surface p-5">
-              <h2 className="text-lg">Our timeline</h2>
+              <h2 className="text-lg">{t.timelineTitle}</h2>
               <ol className="mt-4 space-y-4 border-l border-border pl-5">
                 {MILESTONES.filter((m) => m <= data.couple.duration).map((m) => {
                   const iso = stats.dates[m - 1]!;

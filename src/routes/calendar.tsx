@@ -11,14 +11,15 @@ import {
   type DayStatus,
 } from "@/lib/challenge";
 import { cn } from "@/lib/utils";
+import { copy } from "@/lib/copy";
 
 export const Route = createFileRoute("/calendar")({
   ssr: false,
   head: () => ({
     meta: [
-      { title: "100-Day Calendar — 100 Days Together" },
+      { title: "100-Day Calendar — Lovely 100" },
       { name: "description", content: "See all 100 days at a glance and edit past days of your couple habit challenge." },
-      { property: "og:title", content: "100-Day Calendar — 100 Days Together" },
+      { property: "og:title", content: "100-Day Calendar — Lovely 100" },
       { property: "og:description", content: "Every day of your challenge in one simple grid." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -49,6 +50,7 @@ function CalendarPage() {
   return (
     <AppShell>
       {({ me, data, stats, partner }) => {
+        const t = copy({ kind: data.couple.kind, memberCount: stats.perProfile.length });
         const mine = stats.perProfile.find((p) => p.profile.id === me.id);
         const theirs = stats.perProfile.find((p) => p.profile.id === partner?.id);
         const openDay = openDate ? stats.dates.indexOf(openDate) + 1 : 0;
@@ -60,7 +62,7 @@ function CalendarPage() {
           <div className="pb-8">
             <PageHeader
               title="100-Day Calendar"
-              subtitle={`${stats.completedDaysTogether} days fully completed together so far.`}
+              subtitle={`${stats.completedDaysTogether} ${t.completedDaysSuffix}`}
             />
             <div className="px-5">
               <div className="surface p-4">
