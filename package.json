@@ -12,8 +12,7 @@
     "format": "prettier --write .",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "test:watch": "vitest",
-    "build:mobile": "MOBILE_BUILD=1 vite build && cp dist/client/_shell.html dist/client/index.html"
+    "test:watch": "vitest"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
