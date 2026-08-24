@@ -16,11 +16,14 @@
 -- Existing accounts were unaffected — this function only runs when a brand new
 -- user creates their journey — but no new account could be created at all.
 --
--- ORDER MATTERS: deploy the 4-argument frontend BEFORE running this. Until the
--- new code is live, dropping the old signature moves the failure from
--- "ambiguous" to "function not found" rather than fixing it. The 4-argument
--- call is unambiguous today, so shipping the frontend is what restores
--- onboarding; this migration then removes the trap for good.
+-- What restored onboarding was shipping the 4-argument frontend: that call has
+-- only ever had one candidate, and it was verified working against production
+-- (real signup -> journey created -> read back under RLS) before this migration
+-- was applied. So this is cleanup, and it is safe to run at any time now.
+--
+-- With one candidate left, a stray 3-argument call should also resolve, since
+-- _kind carries a DEFAULT — but that was not tested, so nothing here relies on
+-- it. The frontend sends four arguments.
 
 BEGIN;
 
