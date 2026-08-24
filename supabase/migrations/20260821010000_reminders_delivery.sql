@@ -104,9 +104,18 @@ AS $$
   JOIN auth.users      u  ON u.id = p.auth_user_id
   CROSS JOIN clock k
   LEFT JOIN public.daily_habits h ON h.profile_id = p.id AND h.date = k.local_date
-  -- The other member of the couple, if there is one.
-  LEFT JOIN public.profiles partner
-         ON partner.couple_id = p.couple_id AND partner.id <> p.id
+  -- The other member of the couple. LATERAL ... LIMIT 1 rather than a plain
+  -- join because a couple with three profiles (a stray row, a bad import)
+  -- would otherwise emit one output row per extra member, and each would try
+  -- to send. The ledger would absorb it, but not emitting duplicates is
+  -- better than relying on that.
+  LEFT JOIN LATERAL (
+    SELECT pp.id, pp.name
+    FROM public.profiles pp
+    WHERE pp.couple_id = p.couple_id AND pp.id <> p.id
+    ORDER BY pp.created_at
+    LIMIT 1
+  ) partner ON true
   LEFT JOIN public.daily_habits ph ON ph.profile_id = partner.id AND ph.date = k.local_date
   LEFT JOIN public.reminder_sends s
          ON s.profile_id = p.id
