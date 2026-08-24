@@ -127,13 +127,21 @@ AS $$
     AND u.email_confirmed_at IS NOT NULL   -- never mail an unverified address
     AND k.local_date >= c.start_date       -- challenge has started
     AND k.local_date < c.start_date + c.duration  -- and hasn't finished
-    -- The configured time fell inside the window we're catching up on. The
-    -- CASE handles a window that straddles midnight.
-    AND CASE
-          WHEN k.from_t <= k.now_t
-            THEN r.reminder_time > k.from_t AND r.reminder_time <= k.now_t
-          ELSE r.reminder_time > k.from_t OR  r.reminder_time <= k.now_t
-        END
+    -- The configured time fell inside the window we're catching up on.
+    -- _window_minutes >= 1440 is called out on its own: subtracting exactly
+    -- 24h (or any multiple of it) from a timestamp lands back on the same
+    -- wall-clock time, so from_t = now_t and the "normal" branch below would
+    -- demand reminder_time be both > X and <= X — impossible for any value.
+    -- A window covering a full day or more should just mean "any time of
+    -- day", so it's handled before the straddles-midnight CASE runs at all.
+    AND (
+      _window_minutes >= 1440
+      OR CASE
+           WHEN k.from_t <= k.now_t
+             THEN r.reminder_time > k.from_t AND r.reminder_time <= k.now_t
+           ELSE r.reminder_time > k.from_t OR  r.reminder_time <= k.now_t
+         END
+    )
     -- The weekly review only makes sense on a Sunday.
     AND (r.reminder_type <> 'weekly' OR EXTRACT(dow FROM k.local_date) = 0)
 $$;
