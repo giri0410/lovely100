@@ -130,6 +130,22 @@ export const mockAuth = {
     if (user) user.password = password;
     persist();
   },
+  async deleteAccount(): Promise<void> {
+    hydrate();
+    await delay(null);
+    const userId = db.sessionUserId;
+    if (!userId) throw new Error("You need to be signed in to delete your account.");
+    const profileIds = db.profiles.filter((p) => p.auth_user_id === userId).map((p) => p.id);
+    db.habits = db.habits.filter((h) => !profileIds.includes(h.profile_id));
+    db.expenses = db.expenses.filter((e) => !profileIds.includes(e.profile_id));
+    db.reviews = db.reviews.filter((r) => !profileIds.includes(r.profile_id));
+    db.reminders = db.reminders.filter((r) => !profileIds.includes(r.profile_id));
+    db.profiles = db.profiles.filter((p) => p.auth_user_id !== userId);
+    db.users = db.users.filter((u) => u.id !== userId);
+    db.sessionUserId = null;
+    persist();
+    emitAuth();
+  },
 };
 
 /* ------------------------------ profiles -------------------------------- */

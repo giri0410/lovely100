@@ -29,6 +29,85 @@ export const Route = createFileRoute("/settings")({
   component: SettingsPage,
 });
 
+/**
+ * Required by App Store Review Guideline 5.1.1(v) — any app with account
+ * creation must let people delete the account from inside the app. Typing the
+ * word is deliberate friction: this cannot be undone and it takes the person's
+ * challenge history with it.
+ */
+function DeleteAccountSection({ name }: { name: string }) {
+  const navigate = useNavigate();
+  const qc = useQueryClient();
+  const [open, setOpen] = useState(false);
+  const [confirmation, setConfirmation] = useState("");
+
+  const remove = useMutation({
+    mutationFn: () => api.auth.deleteAccount(),
+    onSuccess: () => {
+      qc.clear();
+      toast.success("Your account has been deleted.");
+      navigate({ to: "/" });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  return (
+    <section className="surface space-y-3 border-destructive/30 p-5">
+      <div>
+        <h2 className="text-lg">Delete account</h2>
+        <p className="text-sm text-muted-foreground">
+          Removes your login and your side of the challenge — habits, avoided expenses, reviews and reminders.
+          Your partner keeps their own history. This can't be undone.
+        </p>
+      </div>
+
+      {open ? (
+        <div className="space-y-3">
+          <label className="block text-sm">
+            <span className="text-muted-foreground">
+              Type <span className="font-medium text-foreground">delete</span> to confirm
+            </span>
+            <input
+              value={confirmation}
+              onChange={(e) => setConfirmation(e.target.value)}
+              autoComplete="off"
+              className="mt-1 w-full rounded-xl border border-input bg-background px-3 py-2.5 outline-none focus:border-destructive"
+            />
+          </label>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                setOpen(false);
+                setConfirmation("");
+              }}
+              className="flex-1 rounded-xl border border-input py-2.5 text-sm font-medium"
+            >
+              Keep my account
+            </button>
+            <button
+              type="button"
+              disabled={confirmation.trim().toLowerCase() !== "delete" || remove.isPending}
+              onClick={() => remove.mutate()}
+              className="flex-1 rounded-xl bg-destructive py-2.5 text-sm font-semibold text-destructive-foreground disabled:opacity-50"
+            >
+              {remove.isPending ? "Deleting…" : "Delete forever"}
+            </button>
+          </div>
+        </div>
+      ) : (
+        <button
+          type="button"
+          onClick={() => setOpen(true)}
+          className="w-full rounded-xl border border-destructive/40 py-2.5 text-sm font-medium text-destructive"
+        >
+          Delete {name}'s account
+        </button>
+      )}
+    </section>
+  );
+}
+
 const THEME_OPTIONS: { value: ThemePreference; label: string }[] = [
   { value: "light", label: "Light" },
   { value: "dark", label: "Dark" },
@@ -228,6 +307,8 @@ function SettingsView({ me, couple }: { me: Profile; couple: Couple }) {
       <button onClick={signOut} className="w-full rounded-xl border border-input py-2.5 text-sm font-medium">
         Sign out
       </button>
+
+      <DeleteAccountSection name={me.name} />
 
     </div>
   );

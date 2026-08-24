@@ -63,6 +63,28 @@ export const auth = {
     const { error } = await supabase.auth.updateUser({ password });
     if (error) throw error;
   },
+  /**
+   * Permanently deletes the signed-in account and its challenge history.
+   *
+   * Runs in an Edge Function because removing an auth user needs the
+   * service-role key, and because a packaged mobile app has no server of its
+   * own to call. The function derives the account from the access token, so
+   * there is no way to aim it at anyone else.
+   */
+  async deleteAccount(): Promise<void> {
+    const { data, error: sessionError } = await supabase.auth.getSession();
+    if (sessionError) throw sessionError;
+    const token = data.session?.access_token;
+    if (!token) throw new Error("You need to be signed in to delete your account.");
+
+    const { error } = await supabase.functions.invoke("delete-account", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (error) throw new Error("We couldn't delete your account. Please try again.");
+
+    await supabase.auth.signOut();
+  },
 };
 
 /* ------------------------------ profiles -------------------------------- */
