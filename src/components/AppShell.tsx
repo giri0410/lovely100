@@ -133,7 +133,13 @@ export function AppShell({ children }: { children: (ctx: AppContext) => ReactNod
 
       <main className="mx-auto w-full max-w-3xl flex-1 pb-24 md:pb-10">{body}</main>
 
-      <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-card/95 backdrop-blur md:hidden">
+      {/* The bar sits at the very bottom of the viewport, which on a notched
+          phone is underneath the home indicator. The inset padding lifts the
+          tap targets clear of it; it resolves to 0 everywhere else. */}
+      <nav
+        className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-card/95 backdrop-blur md:hidden"
+        style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
+      >
         <div className="mx-auto grid max-w-lg grid-cols-5">
           {NAV.map(({ to, label, icon: Icon }) => (
             <Link
