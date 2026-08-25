@@ -81,10 +81,29 @@ Deno.serve(async (request) => {
   // which is the opposite of what the privacy policy promises.
   let paths: string[] = [];
   if (member) {
-    const mediaRes = await admin(
-      `/rest/v1/media?select=storage_path,logs!inner(member_id)&logs.member_id=eq.${member.id}`,
-    );
-    if (mediaRes.ok) {
+    // Two plain queries rather than one with an embedded-resource filter.
+    // PostgREST's `logs!inner(member_id)` form works, but it puts `!`, `(` and
+    // `)` in the query string, and a lookup that has to survive URL encoding
+    // differences between runtimes is the wrong thing to hang photo deletion
+    // on. log_id=in.(...) is unambiguous everywhere.
+    const logsRes = await admin(`/rest/v1/logs?member_id=eq.${member.id}&select=id`);
+    if (!logsRes.ok) {
+      return json({ error: "could not find your photos", detail: await logsRes.text() }, 500);
+    }
+    const logIds = ((await logsRes.json()) as { id: string }[]).map((l) => l.id);
+
+    if (logIds.length > 0) {
+      const mediaRes = await admin(
+        `/rest/v1/media?select=storage_path&log_id=in.(${logIds.join(",")})`,
+      );
+      // A failure here used to be swallowed, leaving paths empty and deleting
+      // the account with every photo still in the bucket — silently, because
+      // nothing downstream needed this to have worked. It is now fatal: better
+      // to fail a deletion the user can retry than to report success while
+      // keeping their photos.
+      if (!mediaRes.ok) {
+        return json({ error: "could not find your photos", detail: await mediaRes.text() }, 500);
+      }
       paths = ((await mediaRes.json()) as { storage_path: string }[]).map((m) => m.storage_path);
     }
   }
