@@ -11,16 +11,16 @@
  * later means changing `deliver()` and nothing else.
  *
  * Volume note: a reminder is skipped when the habit it is about is already
- * done, so an engaged couple generates very little mail. Worst case is one
+ * done, so someone keeping up generates very little mail. Worst case is one
  * email per enabled reminder per person per day.
  */
 
 interface DueReminder {
-  profile_id: string;
-  profile_name: string;
+  member_id: string;
+  member_name: string;
   email: string;
   reminder_type: string;
-  couple_name: string;
+  journey_name: string;
   local_date: string;
   day_number: number;
   week_number: number;
@@ -29,8 +29,8 @@ interface DueReminder {
   spending_done: boolean;
   cert_done: boolean;
   done_count: number;
-  partner_name: string | null;
-  partner_done_count: number;
+  other_member_name: string | null;
+  other_member_done_count: number;
 }
 
 type Outcome = { status: "sent" | "skipped" | "failed"; detail?: string };
@@ -101,11 +101,11 @@ const REMAINING_LABELS: { key: keyof DueReminder; label: string }[] = [
 
 function bodyFor(r: DueReminder): string {
   const remaining = REMAINING_LABELS.filter((h) => !r[h.key]).map((h) => h.label);
-  const lines: string[] = [`Hi ${r.profile_name},`, ""];
+  const lines: string[] = [`Hi ${r.member_name},`, ""];
 
   if (r.reminder_type === "weekly") {
     lines.push(
-      `Week ${r.week_number} of ${r.couple_name} is done. Take two minutes to note what went well and what you'd change.`,
+      `Week ${r.week_number} of ${r.journey_name} is done. Take two minutes to note what went well and what you'd change.`,
     );
     lines.push("", `${APP_URL}/review`);
   } else if (r.reminder_type === "walk") {
@@ -121,8 +121,8 @@ function bodyFor(r: DueReminder): string {
         : `You're ${r.done_count} of 4 on day ${r.day_number}. Still open: ${remaining.join(", ")}.`,
     );
     // Only mention the partner when it's encouraging. Never as a comparison.
-    if (r.partner_name && r.partner_done_count === 4) {
-      lines.push("", `${r.partner_name} has finished today — you're one tick from a day together.`);
+    if (r.other_member_name && r.other_member_done_count === 4) {
+      lines.push("", `${r.other_member_name} has finished today — you're one tick from a day together.`);
     }
     lines.push("", `${APP_URL}/today`);
   }
@@ -162,11 +162,11 @@ async function deliver(r: DueReminder): Promise<Outcome> {
 async function record(r: DueReminder, outcome: Outcome): Promise<void> {
   // on_conflict do nothing: if a concurrent run already claimed this reminder,
   // that run owns it and we quietly stand down.
-  await db("reminder_sends?on_conflict=profile_id,reminder_type,sent_for_date", {
+  await db("reminder_sends?on_conflict=member_id,reminder_type,sent_for_date", {
     method: "POST",
     headers: { Prefer: "resolution=ignore-duplicates,return=minimal" },
     body: JSON.stringify({
-      profile_id: r.profile_id,
+      member_id: r.member_id,
       reminder_type: r.reminder_type,
       sent_for_date: r.local_date,
       status: outcome.status,

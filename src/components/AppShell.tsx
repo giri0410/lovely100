@@ -1,10 +1,10 @@
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useEffect, type ReactNode } from "react";
 import { CalendarDays, Home, NotebookPen, PiggyBank, Settings, Sparkles, TrendingUp } from "lucide-react";
-import { useChallengeData, useMyProfile, useSession } from "@/hooks/useChallenge";
-import { buildStats, type CoupleStats } from "@/lib/stats";
+import { useChallengeData, useMyMember, useSession } from "@/hooks/useChallenge";
+import { buildStats, type JourneyStats } from "@/lib/stats";
 import type { ChallengeData } from "@/hooks/useChallenge";
-import type { Profile } from "@/lib/challenge";
+import type { Member } from "@/lib/challenge";
 import { cn } from "@/lib/utils";
 
 /** The five primary destinations — also the mobile bottom bar. */
@@ -27,17 +27,17 @@ const SECONDARY_NAV = [
 ] as const;
 
 export interface AppContext {
-  me: Profile;
+  me: Member;
   data: ChallengeData;
-  stats: CoupleStats;
-  partner: Profile | undefined;
+  stats: JourneyStats;
+  partner: Member | undefined;
 }
 
 export function AppShell({ children }: { children: (ctx: AppContext) => ReactNode }) {
   const navigate = useNavigate();
   const { userId, loading } = useSession();
-  const meQuery = useMyProfile(userId);
-  const dataQuery = useChallengeData(meQuery.data?.couple_id);
+  const meQuery = useMyMember(userId);
+  const dataQuery = useChallengeData(meQuery.data?.journey_id);
   const pathname = useRouterState({ select: (s) => s.location.pathname });
 
   useEffect(() => {
@@ -75,12 +75,12 @@ export function AppShell({ children }: { children: (ctx: AppContext) => ReactNod
     );
   } else if (meQuery.data && dataQuery.data) {
     const data = dataQuery.data;
-    const stats = buildStats(data.couple, data.profiles, data.habits, data.expenses);
+    const stats = buildStats(data.journey, data.members, data.habits, data.expenses);
     body = children({
       me: meQuery.data,
       data,
       stats,
-      partner: data.profiles.find((p) => p.id !== meQuery.data!.id),
+      partner: data.members.find((p) => p.id !== meQuery.data!.id),
     });
   } else {
     body = <div className="p-10 text-center text-sm text-muted-foreground">Setting things up…</div>;

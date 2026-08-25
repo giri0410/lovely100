@@ -25,22 +25,22 @@ export const Route = createFileRoute("/money")({
 function MoneyPage() {
   return (
     <AppShell>
-      {({ me, data, stats }) => <MoneyView me={me.id} coupleId={data.couple.id} expenses={data.expenses} profiles={data.profiles} total={stats.totalSaved} />}
+      {({ me, data, stats }) => <MoneyView me={me.id} journeyId={data.journey.id} expenses={data.expenses} members={data.members} total={stats.totalSaved} />}
     </AppShell>
   );
 }
 
 function MoneyView({
   me,
-  coupleId,
+  journeyId,
   expenses,
-  profiles,
+  members,
   total,
 }: {
   me: string;
-  coupleId: string;
-  expenses: { id: string; profile_id: string; date: string; amount: number; description: string | null; reason: string | null }[];
-  profiles: { id: string; name: string }[];
+  journeyId: string;
+  expenses: { id: string; member_id: string; date: string; amount: number; description: string | null; reason: string | null }[];
+  members: { id: string; name: string }[];
   total: number;
 }) {
   const qc = useQueryClient();
@@ -53,8 +53,8 @@ function MoneyView({
   const add = useMutation({
     mutationFn: () =>
       api.addExpense({
-        coupleId,
-        profileId: me,
+        journeyId,
+        memberId: me,
         amount: Number(amount),
         description: description || null,
         reason: reason || null,
@@ -65,14 +65,14 @@ function MoneyView({
       setAmount("");
       setDescription("");
       setReason("");
-      qc.invalidateQueries({ queryKey: ["challenge", coupleId] });
+      qc.invalidateQueries({ queryKey: ["challenge", journeyId] });
     },
     onError: (e: Error) => toast.error(e.message),
   });
 
   const remove = useMutation({
     mutationFn: (id: string) => api.deleteExpense(id),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["challenge", coupleId] }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["challenge", journeyId] }),
   });
 
   return (
@@ -165,13 +165,13 @@ function MoneyView({
                 <div>
                   <p className="font-medium">{e.description || "Avoided purchase"}</p>
                   <p className="text-muted-foreground">
-                    {formatShortDate(e.date)} · {profiles.find((p) => p.id === e.profile_id)?.name ?? "Partner"}
+                    {formatShortDate(e.date)} · {members.find((p) => p.id === e.member_id)?.name ?? "Partner"}
                     {e.reason ? ` · ${e.reason}` : ""}
                   </p>
                 </div>
                 <div className="flex shrink-0 items-center gap-3">
                   <span className="font-semibold">{formatMoney(Number(e.amount))}</span>
-                  {e.profile_id === me ? (
+                  {e.member_id === me ? (
                     <button
                       onClick={() => remove.mutate(e.id)}
                       className="text-xs text-muted-foreground underline-offset-4 hover:underline"

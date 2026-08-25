@@ -8,7 +8,7 @@ export const Route = createFileRoute("/auth")({
   head: () => ({
     meta: [
       { title: "Sign in — Lovely 100" },
-      { name: "description", content: "Sign in to track your 100-day couple habit challenge for health, food, money and learning." },
+      { name: "description", content: "Sign in to continue your 100 days — your goals, your pace." },
       { property: "og:title", content: "Sign in — Lovely 100" },
       { property: "og:description", content: "Sign in to your shared 100-day challenge." },
       { property: "og:type", content: "website" },

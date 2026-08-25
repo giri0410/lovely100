@@ -4,7 +4,7 @@ import { ProgressRing } from "@/components/ProgressRing";
 import { formatMinutes, formatMoney } from "@/lib/challenge";
 import { monthlySavings } from "@/lib/stats";
 import { copy } from "@/lib/copy";
-import type { ProfileStats } from "@/lib/stats";
+import type { MemberStats } from "@/lib/stats";
 
 export const Route = createFileRoute("/stats")({
   ssr: false,
@@ -27,7 +27,7 @@ function StatsPage() {
       {({ stats, data, me }) => {
         const months = monthlySavings(data.expenses);
         const maxMonth = Math.max(1, ...months.map((m) => m.total));
-        const t = copy({ kind: data.couple.kind, memberCount: stats.perProfile.length });
+        const t = copy({ kind: data.journey.kind, memberCount: stats.perMember.length });
         return (
           <div className="space-y-5 px-5 pb-8">
             <PageHeader title={t.statsTitle} subtitle={t.statsSubtitle} />
@@ -38,12 +38,12 @@ function StatsPage() {
                 {/* With one member this list is a single bar, and the summary
                     line below drops the "together" framing entirely — the score
                     is that person's own consistency, so say so. */}
-                {stats.perProfile.map((p) => (
-                  <div key={p.profile.id}>
+                {stats.perMember.map((p) => (
+                  <div key={p.member.id}>
                     <div className="flex justify-between">
                       <span className="font-medium">
-                        {p.profile.name}
-                        {p.profile.id === me.id ? " (you)" : ""}
+                        {p.member.name}
+                        {p.member.id === me.id ? " (you)" : ""}
                       </span>
                       <span>{p.completionPct}%</span>
                     </div>
@@ -53,15 +53,15 @@ function StatsPage() {
                   </div>
                 ))}
                 <p className="pt-1 text-muted-foreground">
-                  {t.together ? `Together: ${stats.teamScore}% · ` : ""}🔥 {stats.coupleStreak.current} day streak
-                  (best {stats.coupleStreak.best})
+                  {t.together ? `Together: ${stats.teamScore}% · ` : ""}🔥 {stats.journeyStreak.current} day streak
+                  (best {stats.journeyStreak.best})
                 </p>
                 {t.inviteNudge ? <p className="text-xs text-muted-foreground">{t.inviteNudge}</p> : null}
               </div>
             </section>
 
-            {stats.perProfile.map((p) => (
-              <PersonStats key={p.profile.id} p={p} isMe={p.profile.id === me.id} />
+            {stats.perMember.map((p) => (
+              <PersonStats key={p.member.id} p={p} isMe={p.member.id === me.id} />
             ))}
 
             <section className="surface p-5">
@@ -106,12 +106,12 @@ function StatsPage() {
   );
 }
 
-function PersonStats({ p, isMe }: { p: ProfileStats; isMe: boolean }) {
+function PersonStats({ p, isMe }: { p: MemberStats; isMe: boolean }) {
   return (
     <section className="surface p-5">
       <div className="flex items-baseline justify-between">
         <h2 className="text-lg">
-          {p.profile.name}
+          {p.member.name}
           {isMe ? " (you)" : ""}
         </h2>
         <span className="text-sm text-muted-foreground">

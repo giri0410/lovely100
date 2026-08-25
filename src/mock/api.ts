@@ -8,7 +8,7 @@
  * State lives in memory and is mirrored to localStorage so a page refresh keeps
  * whatever the user did during the session.
  */
-import type { AvoidedExpense, Couple, DailyHabit, Profile } from "@/lib/challenge";
+import type { AvoidedExpense, Journey, DailyHabit, Member } from "@/lib/challenge";
 import { todayISO } from "@/lib/challenge";
 import type { JourneyKind } from "@/lib/copy";
 import {
@@ -136,12 +136,12 @@ export const mockAuth = {
     await delay(null);
     const userId = db.sessionUserId;
     if (!userId) throw new Error("You need to be signed in to delete your account.");
-    const profileIds = db.profiles.filter((p) => p.auth_user_id === userId).map((p) => p.id);
-    db.habits = db.habits.filter((h) => !profileIds.includes(h.profile_id));
-    db.expenses = db.expenses.filter((e) => !profileIds.includes(e.profile_id));
-    db.reviews = db.reviews.filter((r) => !profileIds.includes(r.profile_id));
-    db.reminders = db.reminders.filter((r) => !profileIds.includes(r.profile_id));
-    db.profiles = db.profiles.filter((p) => p.auth_user_id !== userId);
+    const memberIds = db.members.filter((p) => p.auth_user_id === userId).map((p) => p.id);
+    db.habits = db.habits.filter((h) => !memberIds.includes(h.member_id));
+    db.expenses = db.expenses.filter((e) => !memberIds.includes(e.member_id));
+    db.reviews = db.reviews.filter((r) => !memberIds.includes(r.member_id));
+    db.reminders = db.reminders.filter((r) => !memberIds.includes(r.member_id));
+    db.members = db.members.filter((p) => p.auth_user_id !== userId);
     db.users = db.users.filter((u) => u.id !== userId);
     db.sessionUserId = null;
     persist();
@@ -149,45 +149,45 @@ export const mockAuth = {
   },
 };
 
-/* ------------------------------ profiles -------------------------------- */
+/* ------------------------------ members -------------------------------- */
 
-export async function getMyProfile(userId: string): Promise<Profile | null> {
+export async function getMyMember(userId: string): Promise<Member | null> {
   hydrate();
-  return delay(clone(db.profiles.find((p) => p.auth_user_id === userId) ?? null));
+  return delay(clone(db.members.find((p) => p.auth_user_id === userId) ?? null));
 }
 
-export async function createCouple(input: {
+export async function createJourney(input: {
   userId: string;
   name: string;
-  coupleName: string;
+  journeyName: string;
   relationship: string;
   kind: JourneyKind;
-}): Promise<Couple> {
+}): Promise<Journey> {
   hydrate();
   await delay(null);
-  const couple: Couple = {
-    id: uid("couple"),
-    name: input.coupleName || `${input.name}'s 100 days`,
+  const journey: Journey = {
+    id: uid("journey"),
+    name: input.journeyName || `${input.name}'s 100 days`,
     start_date: todayISO(),
     duration: 100,
     invite_code: uid("").slice(1, 7).toUpperCase(),
     is_demo: false,
     kind: input.kind,
   };
-  db.couples.push(couple);
-  db.profiles.push({
-    id: uid("profile"),
+  db.journeys.push(journey);
+  db.members.push({
+    id: uid("member"),
     auth_user_id: input.userId,
-    couple_id: couple.id,
+    journey_id: journey.id,
     name: input.name,
     relationship: input.relationship.trim() || null,
     avatar: null,
   });
   persist();
-  return clone(couple);
+  return clone(journey);
 }
 
-export async function joinCouple(input: {
+export async function joinJourney(input: {
   userId: string;
   name: string;
   relationship: string;
@@ -195,14 +195,14 @@ export async function joinCouple(input: {
 }): Promise<void> {
   hydrate();
   await delay(null);
-  const couple = db.couples.find((c) => c.invite_code === input.inviteCode.trim().toUpperCase());
-  if (!couple) throw new Error("We couldn't find that invite code");
+  const journey = db.journeys.find((c) => c.invite_code === input.inviteCode.trim().toUpperCase());
+  if (!journey) throw new Error("We couldn't find that invite code");
   // Joining makes a journey shared regardless of how it was created.
-  couple.kind = "shared";
-  db.profiles.push({
-    id: uid("profile"),
+  journey.kind = "shared";
+  db.members.push({
+    id: uid("member"),
     auth_user_id: input.userId,
-    couple_id: couple.id,
+    journey_id: journey.id,
     name: input.name,
     relationship: input.relationship.trim() || null,
     avatar: null,
@@ -210,66 +210,66 @@ export async function joinCouple(input: {
   persist();
 }
 
-export async function updateProfileName(profileId: string, name: string): Promise<void> {
+export async function updateMemberName(memberId: string, name: string): Promise<void> {
   hydrate();
   await delay(null);
-  const profile = db.profiles.find((p) => p.id === profileId);
-  if (profile) profile.name = name.trim();
+  const member = db.members.find((p) => p.id === memberId);
+  if (member) member.name = name.trim();
   persist();
 }
 
-export async function updateCouple(coupleId: string, patch: { name: string; start_date: string }): Promise<void> {
+export async function updateJourney(journeyId: string, patch: { name: string; start_date: string }): Promise<void> {
   hydrate();
   await delay(null);
-  const couple = db.couples.find((c) => c.id === coupleId);
-  if (couple) Object.assign(couple, { name: patch.name, start_date: patch.start_date });
+  const journey = db.journeys.find((c) => c.id === journeyId);
+  if (journey) Object.assign(journey, { name: patch.name, start_date: patch.start_date });
   persist();
 }
 
 /* ---------------------------- challenge data ---------------------------- */
 
 export interface MockChallengeData {
-  couple: Couple;
-  profiles: Profile[];
+  journey: Journey;
+  members: Member[];
   habits: DailyHabit[];
   expenses: AvoidedExpense[];
   reviews: MockWeeklyReview[];
 }
 
-export async function getChallengeData(coupleId: string): Promise<MockChallengeData> {
+export async function getChallengeData(journeyId: string): Promise<MockChallengeData> {
   hydrate();
-  const couple = db.couples.find((c) => c.id === coupleId);
-  if (!couple) throw new Error("Challenge not found");
-  const profileIds = db.profiles.filter((p) => p.couple_id === coupleId).map((p) => p.id);
+  const journey = db.journeys.find((c) => c.id === journeyId);
+  if (!journey) throw new Error("Challenge not found");
+  const memberIds = db.members.filter((p) => p.journey_id === journeyId).map((p) => p.id);
   return delay(
     clone({
-      couple,
-      profiles: db.profiles.filter((p) => p.couple_id === coupleId),
-      habits: db.habits.filter((h) => h.couple_id === coupleId).sort((a, b) => a.date.localeCompare(b.date)),
+      journey,
+      members: db.members.filter((p) => p.journey_id === journeyId),
+      habits: db.habits.filter((h) => h.journey_id === journeyId).sort((a, b) => a.date.localeCompare(b.date)),
       expenses: db.expenses
-        .filter((e) => profileIds.includes(e.profile_id))
+        .filter((e) => memberIds.includes(e.member_id))
         .sort((a, b) => b.date.localeCompare(a.date)),
-      reviews: db.reviews.filter((r) => r.couple_id === coupleId),
+      reviews: db.reviews.filter((r) => r.journey_id === journeyId),
     }),
   );
 }
 
 export async function upsertHabit(input: {
-  coupleId: string;
-  profileId: string;
+  journeyId: string;
+  memberId: string;
   date: string;
   patch: Partial<DailyHabit>;
 }): Promise<void> {
   hydrate();
   await delay(null);
-  const existing = db.habits.find((h) => h.profile_id === input.profileId && h.date === input.date);
+  const existing = db.habits.find((h) => h.member_id === input.memberId && h.date === input.date);
   if (existing) {
     Object.assign(existing, input.patch);
   } else {
     db.habits.push({
       id: uid("habit"),
-      couple_id: input.coupleId,
-      profile_id: input.profileId,
+      journey_id: input.journeyId,
+      member_id: input.memberId,
       date: input.date,
       walk_completed: false,
       walk_duration: null,
@@ -289,8 +289,8 @@ export async function upsertHabit(input: {
 
 export async function addExpense(input: {
   /** Unused in the mock layer — kept for signature parity with the real backend. */
-  coupleId?: string;
-  profileId: string;
+  journeyId?: string;
+  memberId: string;
   amount: number;
   description: string | null;
   reason: string | null;
@@ -300,7 +300,7 @@ export async function addExpense(input: {
   await delay(null);
   db.expenses.push({
     id: uid("expense"),
-    profile_id: input.profileId,
+    member_id: input.memberId,
     amount: input.amount,
     description: input.description,
     reason: input.reason,
@@ -319,23 +319,23 @@ export async function deleteExpense(id: string): Promise<void> {
 /* ------------------------------- reviews -------------------------------- */
 
 export async function upsertReview(input: {
-  coupleId: string;
-  profileId: string;
+  journeyId: string;
+  memberId: string;
   weekNumber: number;
   whatWentWell: string | null;
   whatToImprove: string | null;
 }): Promise<void> {
   hydrate();
   await delay(null);
-  const existing = db.reviews.find((r) => r.profile_id === input.profileId && r.week_number === input.weekNumber);
+  const existing = db.reviews.find((r) => r.member_id === input.memberId && r.week_number === input.weekNumber);
   if (existing) {
     existing.what_went_well = input.whatWentWell;
     existing.what_to_improve = input.whatToImprove;
   } else {
     db.reviews.push({
       id: uid("review"),
-      couple_id: input.coupleId,
-      profile_id: input.profileId,
+      journey_id: input.journeyId,
+      member_id: input.memberId,
       week_number: input.weekNumber,
       what_went_well: input.whatWentWell,
       what_to_improve: input.whatToImprove,
@@ -346,27 +346,27 @@ export async function upsertReview(input: {
 
 /* ------------------------------ reminders ------------------------------- */
 
-export async function listReminders(profileId: string): Promise<MockReminder[]> {
+export async function listReminders(memberId: string): Promise<MockReminder[]> {
   hydrate();
-  return delay(clone(db.reminders.filter((r) => r.profile_id === profileId)));
+  return delay(clone(db.reminders.filter((r) => r.member_id === memberId)));
 }
 
 export async function upsertReminder(input: {
-  profileId: string;
+  memberId: string;
   type: string;
   enabled: boolean;
   time: string;
 }): Promise<void> {
   hydrate();
   await delay(null);
-  const existing = db.reminders.find((r) => r.profile_id === input.profileId && r.reminder_type === input.type);
+  const existing = db.reminders.find((r) => r.member_id === input.memberId && r.reminder_type === input.type);
   if (existing) {
     existing.enabled = input.enabled;
     existing.reminder_time = input.time;
   } else {
     db.reminders.push({
       id: uid("rem"),
-      profile_id: input.profileId,
+      member_id: input.memberId,
       reminder_type: input.type,
       enabled: input.enabled,
       reminder_time: input.time,
@@ -384,11 +384,11 @@ export interface AdminUserRow {
   lastSignInAt: string | null;
   emailConfirmed: boolean;
   isAdmin: boolean;
-  profileId: string | null;
+  memberId: string | null;
   name: string | null;
   relationship: string | null;
-  coupleId: string | null;
-  coupleName: string | null;
+  journeyId: string | null;
+  journeyName: string | null;
 }
 
 export async function getAdminStatus(userId: string): Promise<{ isAdmin: boolean; adminCount: number }> {
@@ -413,8 +413,8 @@ export async function listUsers(): Promise<AdminUserRow[]> {
   hydrate();
   return delay(
     db.users.map((u) => {
-      const profile = db.profiles.find((p) => p.auth_user_id === u.id) ?? null;
-      const couple = profile ? db.couples.find((c) => c.id === profile.couple_id) : undefined;
+      const member = db.members.find((p) => p.auth_user_id === u.id) ?? null;
+      const journey = member ? db.journeys.find((c) => c.id === member.journey_id) : undefined;
       return {
         authUserId: u.id,
         email: u.email,
@@ -422,11 +422,11 @@ export async function listUsers(): Promise<AdminUserRow[]> {
         lastSignInAt: u.last_sign_in_at,
         emailConfirmed: u.email_confirmed,
         isAdmin: u.is_admin,
-        profileId: profile?.id ?? null,
-        name: profile?.name ?? null,
-        relationship: profile?.relationship ?? null,
-        coupleId: profile?.couple_id ?? null,
-        coupleName: couple?.name ?? null,
+        memberId: member?.id ?? null,
+        name: member?.name ?? null,
+        relationship: member?.relationship ?? null,
+        journeyId: member?.journey_id ?? null,
+        journeyName: journey?.name ?? null,
       };
     }),
   );
@@ -440,13 +440,13 @@ export async function setUserAdmin(userId: string, makeAdmin: boolean): Promise<
   persist();
 }
 
-export async function adminUpdateProfile(profileId: string, name: string, relationship: string): Promise<void> {
+export async function adminUpdateMember(memberId: string, name: string, relationship: string): Promise<void> {
   hydrate();
   await delay(null);
-  const profile = db.profiles.find((p) => p.id === profileId);
-  if (profile) {
-    profile.name = name.trim();
-    profile.relationship = relationship.trim();
+  const member = db.members.find((p) => p.id === memberId);
+  if (member) {
+    member.name = name.trim();
+    member.relationship = relationship.trim();
   }
   persist();
 }
@@ -454,7 +454,7 @@ export async function adminUpdateProfile(profileId: string, name: string, relati
 export async function deleteUser(userId: string): Promise<void> {
   hydrate();
   await delay(null);
-  db.profiles.forEach((p) => {
+  db.members.forEach((p) => {
     if (p.auth_user_id === userId) p.auth_user_id = null;
   });
   db.users = db.users.filter((u) => u.id !== userId);

@@ -40,9 +40,9 @@ function TodayPage() {
     <AppShell>
       {({ me, data, stats, partner }) => {
         const today = todayISO();
-        const t = copy({ kind: data.couple.kind, memberCount: stats.perProfile.length });
-        const mine = stats.perProfile.find((p) => p.profile.id === me.id);
-        const theirs = stats.perProfile.find((p) => p.profile.id === partner?.id);
+        const t = copy({ kind: data.journey.kind, memberCount: stats.perMember.length });
+        const mine = stats.perMember.find((p) => p.member.id === me.id);
+        const theirs = stats.perMember.find((p) => p.member.id === partner?.id);
         const myEntry = mine?.entriesByDate.get(today);
         const partnerEntry = theirs?.entriesByDate.get(today);
         const myCount = completedCount(myEntry);
@@ -76,10 +76,10 @@ function TodayPage() {
 
             <section className="surface flex items-center gap-5 p-5">
               <ProgressRing
-                value={(stats.currentDay / data.couple.duration) * 100}
+                value={(stats.currentDay / data.journey.duration) * 100}
                 size={116}
                 label={`${stats.currentDay}`}
-                sublabel={`of ${data.couple.duration} days`}
+                sublabel={`of ${data.journey.duration} days`}
               />
               <div className="flex-1 space-y-3">
                 <div>
@@ -87,8 +87,8 @@ function TodayPage() {
                   <p className="font-display text-3xl">{stats.teamScore}%</p>
                 </div>
                 <div className="grid grid-cols-2 gap-3 text-sm">
-                  <MiniStat label="Current streak" value={`🔥 ${stats.coupleStreak.current}`} />
-                  <MiniStat label="Best streak" value={`${stats.coupleStreak.best} days`} />
+                  <MiniStat label="Current streak" value={`🔥 ${stats.journeyStreak.current}`} />
+                  <MiniStat label="Best streak" value={`${stats.journeyStreak.best} days`} />
                   <MiniStat label="Money avoided" value={formatMoney(stats.totalSaved)} />
                   <MiniStat label="Study time" value={formatMinutes(stats.totalStudyMinutes)} />
                 </div>
@@ -106,8 +106,8 @@ function TodayPage() {
                   habit={habit}
                   entry={myEntry}
                   date={today}
-                  coupleId={data.couple.id}
-                  profileId={me.id}
+                  journeyId={data.journey.id}
+                  memberId={me.id}
                 />
               ))}
               <div>
@@ -200,16 +200,16 @@ export function HabitCard({
   habit,
   entry,
   date,
-  coupleId,
-  profileId,
+  journeyId,
+  memberId,
 }: {
   habit: (typeof HABITS)[number];
   entry: DailyHabit | undefined;
   date: string;
-  coupleId: string;
-  profileId: string;
+  journeyId: string;
+  memberId: string;
 }) {
-  const mutation = useHabitMutation(coupleId, profileId);
+  const mutation = useHabitMutation(journeyId, memberId);
   const done = Boolean(entry?.[habit.column]);
   const [walk, setWalk] = useState<string>(String(entry?.walk_duration ?? ""));
   const [minutes, setMinutes] = useState<string>(String(entry?.certification_minutes ?? ""));

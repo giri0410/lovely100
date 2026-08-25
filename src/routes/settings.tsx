@@ -6,7 +6,7 @@ import { AppShell, PageHeader } from "@/components/AppShell";
 import * as api from "@/data";
 import { useReminders } from "@/hooks/useChallenge";
 import { Switch } from "@/components/ui/switch";
-import type { Couple, Profile } from "@/lib/challenge";
+import type { Journey, Member } from "@/lib/challenge";
 import {
   applyThemePreference,
   readThemePreference,
@@ -19,9 +19,9 @@ export const Route = createFileRoute("/settings")({
   head: () => ({
     meta: [
       { title: "Settings — Lovely 100" },
-      { name: "description", content: "Manage your profile, challenge start date, partner invite code and daily reminders." },
+      { name: "description", content: "Manage your name, journey start date, invite code and daily reminders." },
       { property: "og:title", content: "Settings — Lovely 100" },
-      { property: "og:description", content: "Profile, challenge and reminder settings." },
+      { property: "og:description", content: "Name, journey and reminder settings." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
@@ -165,28 +165,28 @@ const REMINDER_TYPES = [
 ];
 
 function SettingsPage() {
-  return <AppShell>{({ me, data }) => <SettingsView me={me} couple={data.couple} />}</AppShell>;
+  return <AppShell>{({ me, data }) => <SettingsView me={me} journey={data.journey} />}</AppShell>;
 }
 
-function SettingsView({ me, couple }: { me: Profile; couple: Couple }) {
+function SettingsView({ me, journey }: { me: Member; journey: Journey }) {
   const qc = useQueryClient();
   const navigate = useNavigate();
   const [name, setName] = useState(me.name);
-  const [coupleName, setCoupleName] = useState(couple.name);
-  const [startDate, setStartDate] = useState(couple.start_date);
+  const [journeyName, setJourneyName] = useState(journey.name);
+  const [startDate, setStartDate] = useState(journey.start_date);
   const reminders = useReminders(me.id);
 
-  const saveProfile = useMutation({
-    mutationFn: () => api.updateProfileName(me.id, name),
+  const saveMember = useMutation({
+    mutationFn: () => api.updateMemberName(me.id, name),
     onSuccess: () => {
-      toast.success("Profile updated");
+      toast.success("Name updated");
       qc.invalidateQueries();
     },
     onError: (e: Error) => toast.error(e.message),
   });
 
-  const saveCouple = useMutation({
-    mutationFn: () => api.updateCouple(couple.id, { name: coupleName, start_date: startDate }),
+  const saveJourney = useMutation({
+    mutationFn: () => api.updateJourney(journey.id, { name: journeyName, start_date: startDate }),
     onSuccess: () => {
       toast.success("Challenge updated");
       qc.invalidateQueries();
@@ -196,7 +196,7 @@ function SettingsView({ me, couple }: { me: Profile; couple: Couple }) {
 
   const saveReminder = useMutation({
     mutationFn: ({ type, enabled, time }: { type: string; enabled: boolean; time: string }) =>
-      api.upsertReminder({ profileId: me.id, type, enabled, time }),
+      api.upsertReminder({ memberId: me.id, type, enabled, time }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["reminders", me.id] }),
     onError: (e: Error) => toast.error(e.message),
   });
@@ -212,7 +212,7 @@ function SettingsView({ me, couple }: { me: Profile; couple: Couple }) {
       <PageHeader title="Settings" subtitle="Keep the challenge yours." />
 
       <section className="surface space-y-3 p-5">
-        <h2 className="text-lg">Your profile</h2>
+        <h2 className="text-lg">Your member</h2>
         <input
           value={name}
           onChange={(e) => setName(e.target.value)}
@@ -222,10 +222,10 @@ function SettingsView({ me, couple }: { me: Profile; couple: Couple }) {
           <p className="text-sm text-muted-foreground capitalize">Role: {me.relationship}</p>
         ) : null}
         <button
-          onClick={() => saveProfile.mutate()}
+          onClick={() => saveMember.mutate()}
           className="rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground"
         >
-          Save profile
+          Save member
         </button>
       </section>
 
@@ -234,8 +234,8 @@ function SettingsView({ me, couple }: { me: Profile; couple: Couple }) {
         <label className="block text-sm">
           <span className="text-muted-foreground">Challenge name</span>
           <input
-            value={coupleName}
-            onChange={(e) => setCoupleName(e.target.value)}
+            value={journeyName}
+            onChange={(e) => setJourneyName(e.target.value)}
             className="mt-1 w-full rounded-xl border border-input bg-background px-3 py-2.5 outline-none focus:border-primary"
           />
         </label>
@@ -248,17 +248,17 @@ function SettingsView({ me, couple }: { me: Profile; couple: Couple }) {
             className="mt-1 w-full rounded-xl border border-input bg-background px-3 py-2.5 outline-none focus:border-primary"
           />
         </label>
-        <p className="text-sm text-muted-foreground">Duration: {couple.duration} days · always exactly 100 days.</p>
+        <p className="text-sm text-muted-foreground">Duration: {journey.duration} days · always exactly 100 days.</p>
         <div className="rounded-xl bg-secondary/60 p-3 text-sm">
           <p className="eyebrow">Partner invite code</p>
-          <p className="font-display text-2xl tracking-widest">{couple.invite_code}</p>
+          <p className="font-display text-2xl tracking-widest">{journey.invite_code}</p>
           <p className="text-xs text-muted-foreground">Share this so your partner can join the same challenge.</p>
         </div>
-        {couple.is_demo ? (
+        {journey.is_demo ? (
           <p className="text-xs text-muted-foreground">Demo challenges can't be renamed.</p>
         ) : (
           <button
-            onClick={() => saveCouple.mutate()}
+            onClick={() => saveJourney.mutate()}
             className="rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground"
           >
             Save challenge

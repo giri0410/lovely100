@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import * as api from "@/data";
-import { useMyProfile, useSession } from "@/hooks/useChallenge";
+import { useMyMember, useSession } from "@/hooks/useChallenge";
 import type { JourneyKind } from "@/lib/copy";
 
 export const Route = createFileRoute("/onboarding")({
@@ -25,10 +25,10 @@ function Onboarding() {
   const navigate = useNavigate();
   const qc = useQueryClient();
   const { userId, loading } = useSession();
-  const meQuery = useMyProfile(userId);
+  const meQuery = useMyMember(userId);
   const [name, setName] = useState("");
   const [relationship, setRelationship] = useState("");
-  const [coupleName, setCoupleName] = useState("");
+  const [journeyName, setJourneyName] = useState("");
   const [kind, setKind] = useState<JourneyKind>("solo");
   const [code, setCode] = useState("");
   const [busy, setBusy] = useState(false);
@@ -42,18 +42,18 @@ function Onboarding() {
   }, [meQuery.data, navigate]);
 
   const finish = async () => {
-    await qc.invalidateQueries({ queryKey: ["my-profile"] });
+    await qc.invalidateQueries({ queryKey: ["my-member"] });
     navigate({ to: "/today" });
   };
 
-  const createCouple = async () => {
+  const createJourney = async () => {
     if (!name.trim()) { toast.error("Add your name first"); return; }
     setBusy(true);
     try {
-      await api.createCouple({
+      await api.createJourney({
         userId: userId!,
         name: name.trim(),
-        coupleName: coupleName.trim(),
+        journeyName: journeyName.trim(),
         relationship,
         kind,
       });
@@ -70,11 +70,11 @@ function Onboarding() {
     }
   };
 
-  const joinCouple = async () => {
+  const joinJourney = async () => {
     if (!name.trim() || !code.trim()) { toast.error("Add your name and the invite code"); return; }
     setBusy(true);
     try {
-      await api.joinCouple({ userId: userId!, name: name.trim(), relationship, inviteCode: code });
+      await api.joinJourney({ userId: userId!, name: name.trim(), relationship, inviteCode: code });
       toast.success("You're in — you're doing this together now 💛");
       finish();
     } catch (err) {
@@ -103,7 +103,7 @@ function Onboarding() {
           />
         </label>
         {/* Free text, not a two-option toggle. The old ["me","wife"] picker was
-            wrong for most couples and meaningless for someone going solo. */}
+            wrong for most journeys and meaningless for someone going solo. */}
         <label className="block text-sm">
           <span className="text-muted-foreground">How should we refer to you? (optional)</span>
           <input
@@ -147,15 +147,15 @@ function Onboarding() {
         <label className="block text-sm">
           <span className="text-muted-foreground">Name it (optional)</span>
           <input
-            value={coupleName}
-            onChange={(e) => setCoupleName(e.target.value)}
+            value={journeyName}
+            onChange={(e) => setJourneyName(e.target.value)}
             placeholder={kind === "shared" ? "e.g. Our 100 Days" : "e.g. My 100 Days"}
             className="mt-1 w-full rounded-xl border border-input bg-background px-3 py-2.5 outline-none focus:border-primary"
           />
         </label>
         <button
           disabled={busy}
-          onClick={createCouple}
+          onClick={createJourney}
           className="w-full rounded-xl bg-primary py-2.5 text-sm font-semibold text-primary-foreground disabled:opacity-60"
         >
           Start Day 1 today
@@ -172,7 +172,7 @@ function Onboarding() {
         />
         <button
           disabled={busy}
-          onClick={joinCouple}
+          onClick={joinJourney}
           className="w-full rounded-xl border border-input py-2.5 text-sm font-semibold disabled:opacity-60"
         >
           Join their 100 days

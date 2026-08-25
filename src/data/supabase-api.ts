@@ -6,7 +6,7 @@
  * src/data/index.ts for the mock/real switch.
  */
 import { supabase } from "@/integrations/supabase/client";
-import type { AvoidedExpense, Couple, DailyHabit, Profile } from "@/lib/challenge";
+import type { AvoidedExpense, Journey, DailyHabit, Member } from "@/lib/challenge";
 import type { JourneyKind } from "@/lib/copy";
 
 /**
@@ -88,38 +88,38 @@ export const auth = {
   },
 };
 
-/* ------------------------------ profiles -------------------------------- */
+/* ------------------------------ members -------------------------------- */
 
-export async function getMyProfile(userId: string): Promise<Profile | null> {
-  const { data, error } = await supabase.from("profiles").select("*").eq("auth_user_id", userId).maybeSingle();
+export async function getMyMember(userId: string): Promise<Member | null> {
+  const { data, error } = await supabase.from("members").select("*").eq("auth_user_id", userId).maybeSingle();
   if (error) throw new Error(error.message);
-  return data as Profile | null;
+  return data as Member | null;
 }
 
-export async function createCouple(input: {
+export async function createJourney(input: {
   userId: string;
   name: string;
-  coupleName: string;
+  journeyName: string;
   relationship: string;
   kind: JourneyKind;
-}): Promise<Couple> {
-  const { data, error } = await supabase.rpc("create_couple_with_profile", {
-    _couple_name: input.coupleName,
-    _profile_name: input.name,
+}): Promise<Journey> {
+  const { data, error } = await supabase.rpc("create_journey_with_member", {
+    _journey_name: input.journeyName,
+    _member_name: input.name,
     _relationship: input.relationship,
     _kind: input.kind,
   });
   if (error) throw new Error(error.message);
-  return data as Couple;
+  return data as Journey;
 }
 
-export async function joinCouple(input: {
+export async function joinJourney(input: {
   userId: string;
   name: string;
   relationship: string;
   inviteCode: string;
 }): Promise<void> {
-  const { error } = await supabase.rpc("join_couple_by_code", {
+  const { error } = await supabase.rpc("join_journey_by_code", {
     _invite_code: input.inviteCode,
     _name: input.name,
     _relationship: input.relationship,
@@ -127,45 +127,45 @@ export async function joinCouple(input: {
   if (error) throw new Error(error.message);
 }
 
-export async function updateProfileName(profileId: string, name: string): Promise<void> {
-  const { error } = await supabase.from("profiles").update({ name: name.trim() }).eq("id", profileId);
+export async function updateMemberName(memberId: string, name: string): Promise<void> {
+  const { error } = await supabase.from("members").update({ name: name.trim() }).eq("id", memberId);
   if (error) throw new Error(error.message);
 }
 
-export async function updateCouple(coupleId: string, patch: { name: string; start_date: string }): Promise<void> {
-  const { error } = await supabase.from("couples").update(patch).eq("id", coupleId);
+export async function updateJourney(journeyId: string, patch: { name: string; start_date: string }): Promise<void> {
+  const { error } = await supabase.from("journeys").update(patch).eq("id", journeyId);
   if (error) throw new Error(error.message);
 }
 
 /* ---------------------------- challenge data ---------------------------- */
 
 export interface RealChallengeData {
-  couple: Couple;
-  profiles: Profile[];
+  journey: Journey;
+  members: Member[];
   habits: DailyHabit[];
   expenses: AvoidedExpense[];
-  reviews: { id: string; profile_id: string; week_number: number; what_went_well: string | null; what_to_improve: string | null }[];
+  reviews: { id: string; member_id: string; week_number: number; what_went_well: string | null; what_to_improve: string | null }[];
 }
 
-export async function getChallengeData(coupleId: string): Promise<RealChallengeData> {
-  const [coupleRes, profilesRes, habitsRes, expensesRes, reviewsRes] = await Promise.all([
-    supabase.from("couples").select("*").eq("id", coupleId).single(),
-    supabase.from("profiles").select("*").eq("couple_id", coupleId),
-    supabase.from("daily_habits").select("*").eq("couple_id", coupleId).order("date", { ascending: true }),
+export async function getChallengeData(journeyId: string): Promise<RealChallengeData> {
+  const [journeyRes, membersRes, habitsRes, expensesRes, reviewsRes] = await Promise.all([
+    supabase.from("journeys").select("*").eq("id", journeyId).single(),
+    supabase.from("members").select("*").eq("journey_id", journeyId),
+    supabase.from("daily_habits").select("*").eq("journey_id", journeyId).order("date", { ascending: true }),
     supabase
       .from("avoided_expenses")
       .select("*")
-      .eq("couple_id", coupleId)
+      .eq("journey_id", journeyId)
       .order("date", { ascending: false }),
-    supabase.from("weekly_reviews").select("*").eq("couple_id", coupleId),
+    supabase.from("weekly_reviews").select("*").eq("journey_id", journeyId),
   ]);
 
-  const error = coupleRes.error || profilesRes.error || habitsRes.error || expensesRes.error || reviewsRes.error;
+  const error = journeyRes.error || membersRes.error || habitsRes.error || expensesRes.error || reviewsRes.error;
   if (error) throw new Error(error.message);
 
   return {
-    couple: coupleRes.data as Couple,
-    profiles: (profilesRes.data ?? []) as Profile[],
+    journey: journeyRes.data as Journey,
+    members: (membersRes.data ?? []) as Member[],
     habits: (habitsRes.data ?? []) as DailyHabit[],
     expenses: (expensesRes.data ?? []) as AvoidedExpense[],
     reviews: reviewsRes.data ?? [],
@@ -173,19 +173,19 @@ export async function getChallengeData(coupleId: string): Promise<RealChallengeD
 }
 
 export async function upsertHabit(input: {
-  coupleId: string;
-  profileId: string;
+  journeyId: string;
+  memberId: string;
   date: string;
   patch: Partial<DailyHabit>;
 }): Promise<void> {
   const { error } = await supabase.from("daily_habits").upsert(
     {
-      couple_id: input.coupleId,
-      profile_id: input.profileId,
+      journey_id: input.journeyId,
+      member_id: input.memberId,
       date: input.date,
       ...input.patch,
     },
-    { onConflict: "profile_id,date" },
+    { onConflict: "member_id,date" },
   );
   if (error) throw new Error(error.message);
 }
@@ -193,16 +193,16 @@ export async function upsertHabit(input: {
 /* ------------------------------ expenses -------------------------------- */
 
 export async function addExpense(input: {
-  coupleId: string;
-  profileId: string;
+  journeyId: string;
+  memberId: string;
   amount: number;
   description: string | null;
   reason: string | null;
   date: string;
 }): Promise<void> {
   const { error } = await supabase.from("avoided_expenses").insert({
-    couple_id: input.coupleId,
-    profile_id: input.profileId,
+    journey_id: input.journeyId,
+    member_id: input.memberId,
     amount: input.amount,
     description: input.description,
     reason: input.reason,
@@ -219,47 +219,47 @@ export async function deleteExpense(id: string): Promise<void> {
 /* ------------------------------- reviews -------------------------------- */
 
 export async function upsertReview(input: {
-  coupleId: string;
-  profileId: string;
+  journeyId: string;
+  memberId: string;
   weekNumber: number;
   whatWentWell: string | null;
   whatToImprove: string | null;
 }): Promise<void> {
   const { error } = await supabase.from("weekly_reviews").upsert(
     {
-      couple_id: input.coupleId,
-      profile_id: input.profileId,
+      journey_id: input.journeyId,
+      member_id: input.memberId,
       week_number: input.weekNumber,
       what_went_well: input.whatWentWell,
       what_to_improve: input.whatToImprove,
     },
-    { onConflict: "profile_id,week_number" },
+    { onConflict: "member_id,week_number" },
   );
   if (error) throw new Error(error.message);
 }
 
 /* ------------------------------ reminders ------------------------------- */
 
-export async function listReminders(profileId: string) {
-  const { data, error } = await supabase.from("reminders").select("*").eq("profile_id", profileId);
+export async function listReminders(memberId: string) {
+  const { data, error } = await supabase.from("reminders").select("*").eq("member_id", memberId);
   if (error) throw new Error(error.message);
   return data ?? [];
 }
 
 export async function upsertReminder(input: {
-  profileId: string;
+  memberId: string;
   type: string;
   enabled: boolean;
   time: string;
 }): Promise<void> {
   const { error } = await supabase.from("reminders").upsert(
     {
-      profile_id: input.profileId,
+      member_id: input.memberId,
       reminder_type: input.type,
       enabled: input.enabled,
       reminder_time: input.time,
     },
-    { onConflict: "profile_id,reminder_type" },
+    { onConflict: "member_id,reminder_type" },
   );
   if (error) throw new Error(error.message);
 }
@@ -277,11 +277,11 @@ export interface AdminUserRow {
   lastSignInAt: string | null;
   emailConfirmed: boolean;
   isAdmin: boolean;
-  profileId: string | null;
+  memberId: string | null;
   name: string | null;
   relationship: string | null;
-  coupleId: string | null;
-  coupleName: string | null;
+  journeyId: string | null;
+  journeyName: string | null;
 }
 
 export async function getAdminStatus(_userId: string): Promise<{ isAdmin: boolean; adminCount: number }> {
@@ -300,8 +300,8 @@ export async function setUserAdmin(userId: string, makeAdmin: boolean): Promise<
   await (await adminFns()).setUserAdmin({ data: { userId, makeAdmin } });
 }
 
-export async function adminUpdateProfile(profileId: string, name: string, relationship: string): Promise<void> {
-  await (await adminFns()).updateUserProfile({ data: { profileId, name, relationship } });
+export async function adminUpdateMember(memberId: string, name: string, relationship: string): Promise<void> {
+  await (await adminFns()).updateUserMember({ data: { memberId, name, relationship } });
 }
 
 export async function deleteUser(userId: string): Promise<void> {

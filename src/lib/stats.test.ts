@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { addDays, isSunday, todayISO, type AvoidedExpense, type Couple, type DailyHabit, type Profile } from "./challenge";
+import { addDays, isSunday, todayISO, type AvoidedExpense, type Journey, type DailyHabit, type Member } from "./challenge";
 import { buildStats, buildWeekStats, isWeekComplete, monthlySavings } from "./stats";
 import type { JourneyKind } from "./copy";
 
@@ -8,10 +8,10 @@ import type { JourneyKind } from "./copy";
  * todayISO() internally. A challenge that started `daysAgo` days ago puts today
  * on day `daysAgo + 1`.
  */
-function makeCouple(daysAgo: number, duration = 100, kind: JourneyKind = "shared"): Couple {
+function makeJourney(daysAgo: number, duration = 100, kind: JourneyKind = "shared"): Journey {
   return {
-    id: "couple-1",
-    name: "Test couple",
+    id: "journey-1",
+    name: "Test journey",
     start_date: addDays(todayISO(), -daysAgo),
     duration,
     invite_code: "TEST01",
@@ -20,15 +20,15 @@ function makeCouple(daysAgo: number, duration = 100, kind: JourneyKind = "shared
   };
 }
 
-function makeProfile(id: string, name: string): Profile {
-  return { id, auth_user_id: `auth-${id}`, couple_id: "couple-1", name, relationship: "partner", avatar: null };
+function makeMember(id: string, name: string): Member {
+  return { id, auth_user_id: `auth-${id}`, journey_id: "journey-1", name, relationship: "partner", avatar: null };
 }
 
-function habit(profileId: string, date: string, patch: Partial<DailyHabit> = {}): DailyHabit {
+function habit(memberId: string, date: string, patch: Partial<DailyHabit> = {}): DailyHabit {
   return {
-    id: `${profileId}-${date}`,
-    couple_id: "couple-1",
-    profile_id: profileId,
+    id: `${memberId}-${date}`,
+    journey_id: "journey-1",
+    member_id: memberId,
     date,
     walk_completed: false,
     walk_duration: null,
@@ -59,7 +59,7 @@ const noExpenses: AvoidedExpense[] = [];
 
 describe("buildStats — challenge shape", () => {
   it("puts today on the right day number and lays out the full duration", () => {
-    const stats = buildStats(makeCouple(4), [], [], noExpenses);
+    const stats = buildStats(makeJourney(4), [], [], noExpenses);
     expect(stats.currentDay).toBe(5);
     expect(stats.today).toBe(todayISO());
     expect(stats.dates).toHaveLength(100);
@@ -68,27 +68,27 @@ describe("buildStats — challenge shape", () => {
 
   it("clamps the day number to the challenge window", () => {
     // Starts tomorrow: still day 1, never day 0 or negative.
-    expect(buildStats(makeCouple(-1), [], [], noExpenses).currentDay).toBe(1);
+    expect(buildStats(makeJourney(-1), [], [], noExpenses).currentDay).toBe(1);
     // Long finished: caps at the duration rather than running past it.
-    expect(buildStats(makeCouple(500), [], [], noExpenses).currentDay).toBe(100);
+    expect(buildStats(makeJourney(500), [], [], noExpenses).currentDay).toBe(100);
   });
 
   it("respects a non-default duration", () => {
-    const stats = buildStats(makeCouple(2, 30), [], [], noExpenses);
+    const stats = buildStats(makeJourney(2, 30), [], [], noExpenses);
     expect(stats.dates).toHaveLength(30);
   });
 
-  it("returns zeroed totals for a couple with no profiles", () => {
-    const stats = buildStats(makeCouple(4), [], [], noExpenses);
+  it("returns zeroed totals for a journey with no members", () => {
+    const stats = buildStats(makeJourney(4), [], [], noExpenses);
     expect(stats.teamScore).toBe(0);
-    expect(stats.coupleStreak).toEqual({ current: 0, best: 0 });
+    expect(stats.journeyStreak).toEqual({ current: 0, best: 0 });
     expect(stats.completedDaysTogether).toBe(0);
   });
 });
 
 describe("buildStats — per person", () => {
-  const me = makeProfile("p1", "Me");
-  const partner = makeProfile("p2", "Partner");
+  const me = makeMember("p1", "Me");
+  const partner = makeMember("p2", "Partner");
 
   // Today is day 5. I finished days 1-3 fully and nothing since; my partner
   // finished all five days.
@@ -98,9 +98,9 @@ describe("buildStats — per person", () => {
     ...days.map((d) => habit("p2", d, { ...ALL_FOUR, walk_duration: 40, certification_minutes: 60 })),
   ];
 
-  const stats = buildStats(makeCouple(4), [me, partner], habits, noExpenses);
-  const mine = stats.perProfile[0]!;
-  const theirs = stats.perProfile[1]!;
+  const stats = buildStats(makeJourney(4), [me, partner], habits, noExpenses);
+  const mine = stats.perMember[0]!;
+  const theirs = stats.perMember[1]!;
 
   it("counts elapsed days, not the whole challenge", () => {
     expect(mine.daysElapsed).toBe(5);
@@ -120,10 +120,10 @@ describe("buildStats — per person", () => {
 
   it("counts a partial day as partial, not complete", () => {
     const partial = [habit("p1", days[0]!, { walk_completed: true, healthy_food_completed: true })];
-    const s = buildStats(makeCouple(4), [me], partial, noExpenses);
-    expect(s.perProfile[0]!.completedDays).toBe(0);
-    expect(s.perProfile[0]!.partialDays).toBe(1);
-    expect(s.perProfile[0]!.totalChecks).toBe(2);
+    const s = buildStats(makeJourney(4), [me], partial, noExpenses);
+    expect(s.perMember[0]!.completedDays).toBe(0);
+    expect(s.perMember[0]!.partialDays).toBe(1);
+    expect(s.perMember[0]!.totalChecks).toBe(2);
   });
 
   it("defaults missing walk and study minutes to the 30-minute target", () => {
@@ -139,8 +139,8 @@ describe("buildStats — per person", () => {
   });
 
   it("reports zero average when nothing was studied", () => {
-    const s = buildStats(makeCouple(4), [me], [], noExpenses);
-    expect(s.perProfile[0]!.certification.avg).toBe(0);
+    const s = buildStats(makeJourney(4), [me], [], noExpenses);
+    expect(s.perMember[0]!.certification.avg).toBe(0);
   });
 
   it("counts a checked Sunday as a cheat day rather than a healthy day", () => {
@@ -159,42 +159,42 @@ describe("buildStats — per person", () => {
 });
 
 describe("buildStats — money", () => {
-  const me = makeProfile("p1", "Me");
-  const partner = makeProfile("p2", "Partner");
+  const me = makeMember("p1", "Me");
+  const partner = makeMember("p2", "Partner");
   const today = todayISO();
   const expenses: AvoidedExpense[] = [
-    { id: "x1", profile_id: "p1", date: today, amount: 500, description: null, reason: null },
-    { id: "x2", profile_id: "p2", date: today, amount: 1200, description: null, reason: null },
-    { id: "x3", profile_id: "p2", date: today, amount: 300, description: null, reason: null },
+    { id: "x1", member_id: "p1", date: today, amount: 500, description: null, reason: null },
+    { id: "x2", member_id: "p2", date: today, amount: 1200, description: null, reason: null },
+    { id: "x3", member_id: "p2", date: today, amount: 300, description: null, reason: null },
   ];
 
-  const stats = buildStats(makeCouple(4), [me, partner], [], expenses);
+  const stats = buildStats(makeJourney(4), [me, partner], [], expenses);
 
   it("attributes each avoided expense to the person who logged it", () => {
-    expect(stats.perProfile[0]!.saved).toBe(500);
-    expect(stats.perProfile[0]!.savedCount).toBe(1);
-    expect(stats.perProfile[1]!.saved).toBe(1500);
-    expect(stats.perProfile[1]!.savedCount).toBe(2);
+    expect(stats.perMember[0]!.saved).toBe(500);
+    expect(stats.perMember[0]!.savedCount).toBe(1);
+    expect(stats.perMember[1]!.saved).toBe(1500);
+    expect(stats.perMember[1]!.savedCount).toBe(2);
   });
 
-  it("totals the whole couple", () => {
+  it("totals the whole journey", () => {
     expect(stats.totalSaved).toBe(2000);
     expect(stats.totalSavedCount).toBe(3);
   });
 
   it("tolerates string amounts coming back from Postgres numeric", () => {
     // numeric(12,2) arrives as a string over PostgREST, hence the Number() calls.
-    const s = buildStats(makeCouple(4), [me], [], [
-      { id: "x", profile_id: "p1", date: today, amount: "250.50" as unknown as number, description: null, reason: null },
+    const s = buildStats(makeJourney(4), [me], [], [
+      { id: "x", member_id: "p1", date: today, amount: "250.50" as unknown as number, description: null, reason: null },
     ]);
-    expect(s.perProfile[0]!.saved).toBeCloseTo(250.5);
+    expect(s.perMember[0]!.saved).toBeCloseTo(250.5);
     expect(s.totalSaved).toBeCloseTo(250.5);
   });
 });
 
-describe("buildStats — the couple view", () => {
-  const me = makeProfile("p1", "Me");
-  const partner = makeProfile("p2", "Partner");
+describe("buildStats — the journey view", () => {
+  const me = makeMember("p1", "Me");
+  const partner = makeMember("p2", "Partner");
   const days = firstDays(4, 5);
 
   it("averages both partners into the team score", () => {
@@ -202,7 +202,7 @@ describe("buildStats — the couple view", () => {
       ...days.slice(0, 3).map((d) => habit("p1", d, ALL_FOUR)),
       ...days.map((d) => habit("p2", d, ALL_FOUR)),
     ];
-    const stats = buildStats(makeCouple(4), [me, partner], habits, noExpenses);
+    const stats = buildStats(makeJourney(4), [me, partner], habits, noExpenses);
     expect(stats.teamScore).toBe(80); // (60 + 100) / 2
     expect(stats.overallPct).toBe(stats.teamScore);
   });
@@ -212,17 +212,17 @@ describe("buildStats — the couple view", () => {
       ...days.slice(0, 3).map((d) => habit("p1", d, ALL_FOUR)),
       ...days.map((d) => habit("p2", d, ALL_FOUR)),
     ];
-    const stats = buildStats(makeCouple(4), [me, partner], habits, noExpenses);
+    const stats = buildStats(makeJourney(4), [me, partner], habits, noExpenses);
     expect(stats.completedDaysTogether).toBe(3);
-    expect(stats.coupleStreak.best).toBe(3);
+    expect(stats.journeyStreak.best).toBe(3);
   });
 
   it("shows a solo user their own score labelled as the team score", () => {
     // Documented gap: before a partner joins, "Together" is just you. Phase 3
     // makes the solo state honest — this expectation should change then.
     const habits = days.slice(0, 3).map((d) => habit("p1", d, ALL_FOUR));
-    const stats = buildStats(makeCouple(4), [me], habits, noExpenses);
-    expect(stats.teamScore).toBe(stats.perProfile[0]!.completionPct);
+    const stats = buildStats(makeJourney(4), [me], habits, noExpenses);
+    expect(stats.teamScore).toBe(stats.perMember[0]!.completionPct);
   });
 
   it("sums study minutes across both partners", () => {
@@ -230,20 +230,20 @@ describe("buildStats — the couple view", () => {
       habit("p1", days[0]!, { certification_completed: true, certification_minutes: 45 }),
       habit("p2", days[0]!, { certification_completed: true, certification_minutes: 75 }),
     ];
-    const stats = buildStats(makeCouple(4), [me, partner], habits, noExpenses);
+    const stats = buildStats(makeJourney(4), [me, partner], habits, noExpenses);
     expect(stats.totalStudyMinutes).toBe(120);
   });
 });
 
 describe("buildWeekStats", () => {
-  const me = makeProfile("p1", "Me");
+  const me = makeMember("p1", "Me");
   // Today is day 8, so week 1 is fully elapsed and week 2 has one day.
   const days = firstDays(7, 8);
   const week1 = days.slice(0, 7);
 
   function statsFor(habits: DailyHabit[], expenses: AvoidedExpense[] = []) {
-    const s = buildStats(makeCouple(7), [me], habits, expenses);
-    return buildWeekStats(s.perProfile[0]!, week1, expenses);
+    const s = buildStats(makeJourney(7), [me], habits, expenses);
+    return buildWeekStats(s.perMember[0]!, week1, expenses);
   }
 
   it("returns zeroes for a week with nothing logged", () => {
@@ -277,10 +277,10 @@ describe("buildWeekStats", () => {
 
   it("only totals expenses dated inside the week", () => {
     const inside: AvoidedExpense = {
-      id: "a", profile_id: "p1", date: week1[2]!, amount: 400, description: null, reason: null,
+      id: "a", member_id: "p1", date: week1[2]!, amount: 400, description: null, reason: null,
     };
     const outside: AvoidedExpense = {
-      id: "b", profile_id: "p1", date: days[7]!, amount: 900, description: null, reason: null,
+      id: "b", member_id: "p1", date: days[7]!, amount: 900, description: null, reason: null,
     };
     expect(statsFor([], [inside, outside]).avoided).toBe(400);
   });
@@ -290,7 +290,7 @@ describe("buildWeekStats", () => {
     expect(statsFor(habits).overallPct).toBe(100);
   });
 
-  it("handles an undefined profile without throwing", () => {
+  it("handles an undefined member without throwing", () => {
     expect(buildWeekStats(undefined, week1, []).overallPct).toBe(0);
   });
 });
@@ -315,7 +315,7 @@ describe("isWeekComplete", () => {
 describe("monthlySavings", () => {
   const row = (date: string, amount: number): AvoidedExpense => ({
     id: date + amount,
-    profile_id: "p1",
+    member_id: "p1",
     date,
     amount,
     description: null,

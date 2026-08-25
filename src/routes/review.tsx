@@ -28,7 +28,7 @@ function ReviewPage() {
     <AppShell>
       {({ me, data, stats }) => {
         const currentWeek = weekNumberForDay(stats.currentDay);
-        return <ReviewView me={me.id} coupleId={data.couple.id} stats={stats} data={data} initialWeek={currentWeek} />;
+        return <ReviewView me={me.id} journeyId={data.journey.id} stats={stats} data={data} initialWeek={currentWeek} />;
       }}
     </AppShell>
   );
@@ -36,30 +36,30 @@ function ReviewPage() {
 
 function ReviewView({
   me,
-  coupleId,
+  journeyId,
   stats,
   data,
   initialWeek,
 }: {
   me: string;
-  coupleId: string;
+  journeyId: string;
   stats: ReturnType<typeof import("@/lib/stats").buildStats>;
   data: import("@/hooks/useChallenge").ChallengeData;
   initialWeek: number;
 }) {
   const qc = useQueryClient();
   const [week, setWeek] = useState(initialWeek);
-  const weeks = Array.from({ length: Math.ceil(data.couple.duration / 7) }, (_, i) => i + 1).filter(
+  const weeks = Array.from({ length: Math.ceil(data.journey.duration / 7) }, (_, i) => i + 1).filter(
     (w) => w <= initialWeek,
   );
   const weekDates = stats.dates.slice((week - 1) * 7, week * 7).filter((d) => d <= stats.today);
 
-  const mine = stats.perProfile.find((p) => p.profile.id === me);
-  const t = copy({ kind: data.couple.kind, memberCount: stats.perProfile.length });
+  const mine = stats.perMember.find((p) => p.member.id === me);
+  const t = copy({ kind: data.journey.kind, memberCount: stats.perMember.length });
   const summary = buildWeekStats(mine, weekDates, data.expenses);
   const complete = isWeekComplete(week, stats.currentDay);
 
-  const existing = data.reviews.find((r) => r.profile_id === me && r.week_number === week);
+  const existing = data.reviews.find((r) => r.member_id === me && r.week_number === week);
   const [well, setWell] = useState(existing?.what_went_well ?? "");
   const [improve, setImprove] = useState(existing?.what_to_improve ?? "");
 
@@ -71,20 +71,20 @@ function ReviewView({
   const save = useMutation({
     mutationFn: () =>
       api.upsertReview({
-        coupleId,
-        profileId: me,
+        journeyId,
+        memberId: me,
         weekNumber: week,
         whatWentWell: well || null,
         whatToImprove: improve || null,
       }),
     onSuccess: () => {
       toast.success("Review saved 💛");
-      qc.invalidateQueries({ queryKey: ["challenge", coupleId] });
+      qc.invalidateQueries({ queryKey: ["challenge", journeyId] });
     },
     onError: (e: Error) => toast.error(e.message),
   });
 
-  const partnerReviews = data.reviews.filter((r) => r.week_number === week && r.profile_id !== me);
+  const partnerReviews = data.reviews.filter((r) => r.week_number === week && r.member_id !== me);
 
   return (
     <div className="space-y-5 px-5 pb-8">

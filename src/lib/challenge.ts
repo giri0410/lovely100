@@ -25,8 +25,8 @@ export const HABITS: HabitDef[] = [
 
 export interface DailyHabit {
   id: string;
-  couple_id: string;
-  profile_id: string;
+  journey_id: string;
+  member_id: string;
   date: string;
   walk_completed: boolean;
   walk_duration: number | null;
@@ -38,17 +38,17 @@ export interface DailyHabit {
   notes: string | null;
 }
 
-export interface Profile {
+export interface Member {
   id: string;
   auth_user_id: string | null;
-  couple_id: string;
+  journey_id: string;
   name: string;
   /** Optional. Someone doing their 100 days alone has no relationship to state. */
   relationship: string | null;
   avatar: string | null;
 }
 
-export interface Couple {
+export interface Journey {
   id: string;
   name: string;
   start_date: string;
@@ -65,7 +65,7 @@ export interface Couple {
 
 export interface AvoidedExpense {
   id: string;
-  profile_id: string;
+  member_id: string;
   date: string;
   amount: number;
   description: string | null;

@@ -18,7 +18,7 @@ export const Route = createFileRoute("/calendar")({
   head: () => ({
     meta: [
       { title: "100-Day Calendar — Lovely 100" },
-      { name: "description", content: "See all 100 days at a glance and edit past days of your couple habit challenge." },
+      { name: "description", content: "See all 100 days at a glance and edit any past day of your journey." },
       { property: "og:title", content: "100-Day Calendar — Lovely 100" },
       { property: "og:description", content: "Every day of your challenge in one simple grid." },
       { property: "og:type", content: "website" },
@@ -50,9 +50,9 @@ function CalendarPage() {
   return (
     <AppShell>
       {({ me, data, stats, partner }) => {
-        const t = copy({ kind: data.couple.kind, memberCount: stats.perProfile.length });
-        const mine = stats.perProfile.find((p) => p.profile.id === me.id);
-        const theirs = stats.perProfile.find((p) => p.profile.id === partner?.id);
+        const t = copy({ kind: data.journey.kind, memberCount: stats.perMember.length });
+        const mine = stats.perMember.find((p) => p.member.id === me.id);
+        const theirs = stats.perMember.find((p) => p.member.id === partner?.id);
         const openDay = openDate ? stats.dates.indexOf(openDate) + 1 : 0;
         const myEntry = openDate ? mine?.entriesByDate.get(openDate) : undefined;
         const partnerEntry = openDate ? theirs?.entriesByDate.get(openDate) : undefined;
@@ -135,8 +135,8 @@ function CalendarPage() {
                           habit={h}
                           entry={myEntry}
                           date={openDate}
-                          coupleId={data.couple.id}
-                          profileId={me.id}
+                          journeyId={data.journey.id}
+                          memberId={me.id}
                         />
                       ))}
                       {partner ? (

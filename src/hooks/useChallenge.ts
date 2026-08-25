@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import * as api from "@/data";
-import type { AvoidedExpense, Couple, DailyHabit, Profile } from "@/lib/challenge";
+import type { AvoidedExpense, Journey, DailyHabit, Member } from "@/lib/challenge";
 
 export interface WeeklyReview {
   id: string;
-  profile_id: string;
+  member_id: string;
   week_number: number;
   what_went_well: string | null;
   what_to_improve: string | null;
@@ -13,7 +13,7 @@ export interface WeeklyReview {
 
 export interface Reminder {
   id: string;
-  profile_id: string;
+  member_id: string;
   reminder_type: string;
   enabled: boolean;
   reminder_time: string;
@@ -40,55 +40,55 @@ export function useSession() {
   return { userId, loading };
 }
 
-export function useMyProfile(userId: string | null) {
+export function useMyMember(userId: string | null) {
   return useQuery({
-    queryKey: ["my-profile", userId],
+    queryKey: ["my-member", userId],
     enabled: !!userId,
-    queryFn: (): Promise<Profile | null> => api.getMyProfile(userId!),
+    queryFn: (): Promise<Member | null> => api.getMyMember(userId!),
   });
 }
 
 export interface ChallengeData {
-  couple: Couple;
-  profiles: Profile[];
+  journey: Journey;
+  members: Member[];
   habits: DailyHabit[];
   expenses: AvoidedExpense[];
   reviews: WeeklyReview[];
 }
 
-export function useChallengeData(coupleId: string | undefined) {
+export function useChallengeData(journeyId: string | undefined) {
   return useQuery({
-    queryKey: ["challenge", coupleId],
-    enabled: !!coupleId,
-    queryFn: (): Promise<ChallengeData> => api.getChallengeData(coupleId!),
+    queryKey: ["challenge", journeyId],
+    enabled: !!journeyId,
+    queryFn: (): Promise<ChallengeData> => api.getChallengeData(journeyId!),
   });
 }
 
-export function useHabitMutation(coupleId: string | undefined, profileId: string | undefined) {
+export function useHabitMutation(journeyId: string | undefined, memberId: string | undefined) {
   const qc = useQueryClient();
-  const queryKey = ["challenge", coupleId];
+  const queryKey = ["challenge", journeyId];
 
   return useMutation({
     mutationFn: ({ date, patch }: { date: string; patch: Partial<DailyHabit> }) =>
-      api.upsertHabit({ coupleId: coupleId!, profileId: profileId!, date, patch }),
+      api.upsertHabit({ journeyId: journeyId!, memberId: memberId!, date, patch }),
 
     // Move the checkmark now, reconcile later. Without this every tap waits on
     // a five-table refetch, which is the whole "30 seconds a day" budget.
     onMutate: async ({ date, patch }) => {
       await qc.cancelQueries({ queryKey });
       const previous = qc.getQueryData<ChallengeData>(queryKey);
-      if (!previous || !profileId || !coupleId) return { previous };
+      if (!previous || !memberId || !journeyId) return { previous };
 
-      const index = previous.habits.findIndex((h) => h.profile_id === profileId && h.date === date);
+      const index = previous.habits.findIndex((h) => h.member_id === memberId && h.date === date);
       const habits =
         index >= 0
           ? previous.habits.map((h, i) => (i === index ? { ...h, ...patch } : h))
           : [
               ...previous.habits,
               {
-                id: `optimistic-${profileId}-${date}`,
-                couple_id: coupleId,
-                profile_id: profileId,
+                id: `optimistic-${memberId}-${date}`,
+                journey_id: journeyId,
+                member_id: memberId,
                 date,
                 walk_completed: false,
                 walk_duration: null,
@@ -116,10 +116,10 @@ export function useHabitMutation(coupleId: string | undefined, profileId: string
   });
 }
 
-export function useReminders(profileId: string | undefined) {
+export function useReminders(memberId: string | undefined) {
   return useQuery({
-    queryKey: ["reminders", profileId],
-    enabled: !!profileId,
-    queryFn: (): Promise<Reminder[]> => api.listReminders(profileId!),
+    queryKey: ["reminders", memberId],
+    enabled: !!memberId,
+    queryFn: (): Promise<Reminder[]> => api.listReminders(memberId!),
   });
 }

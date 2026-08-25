@@ -21,9 +21,9 @@ export const Route = createFileRoute("/admin")({
   head: () => ({
     meta: [
       { title: "Admin — Lovely 100" },
-      { name: "description", content: "Manage member accounts, roles and profiles for the Lovely 100 challenge." },
+      { name: "description", content: "Manage user accounts, roles and members for the Lovely 100 challenge." },
       { property: "og:title", content: "Admin — Lovely 100" },
-      { property: "og:description", content: "Member and role administration." },
+      { property: "og:description", content: "User and role administration." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
@@ -121,10 +121,10 @@ function AdminConsole({ currentUserId }: { currentUserId: string }) {
     onSuccess: () => { toast.success("Role updated"); refresh(); },
     onError,
   });
-  const profileMutation = useMutation({
-    mutationFn: (v: { profileId: string; name: string; relationship: string }) =>
-      api.adminUpdateProfile(v.profileId, v.name, v.relationship),
-    onSuccess: () => { toast.success("Profile updated"); setEditing(null); refresh(); },
+  const memberMutation = useMutation({
+    mutationFn: (v: { memberId: string; name: string; relationship: string }) =>
+      api.adminUpdateMember(v.memberId, v.name, v.relationship),
+    onSuccess: () => { toast.success("Member updated"); setEditing(null); refresh(); },
     onError,
   });
   const deleteMutation = useMutation({
@@ -142,7 +142,7 @@ function AdminConsole({ currentUserId }: { currentUserId: string }) {
   const term = query.trim().toLowerCase();
   const filtered = term
     ? users.filter((u) =>
-        [u.email, u.name, u.coupleName].some((v) => v?.toLowerCase().includes(term)),
+        [u.email, u.name, u.journeyName].some((v) => v?.toLowerCase().includes(term)),
       )
     : users;
 
@@ -166,7 +166,7 @@ function AdminConsole({ currentUserId }: { currentUserId: string }) {
           <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             className="pl-9"
-            placeholder="Search by email, name or couple"
+            placeholder="Search by email, name or journey"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
           />
@@ -186,10 +186,10 @@ function AdminConsole({ currentUserId }: { currentUserId: string }) {
               <article key={u.authUserId} className="surface p-4">
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div className="min-w-0">
-                    <p className="truncate font-medium">{u.name ?? "No profile"}</p>
+                    <p className="truncate font-medium">{u.name ?? "No member yet"}</p>
                     <p className="truncate text-sm text-muted-foreground">{u.email ?? "—"}</p>
                     <p className="mt-1 text-xs text-muted-foreground">
-                      {u.coupleName ? [u.coupleName, u.relationship].filter(Boolean).join(" · ") : "No journey yet"}
+                      {u.journeyName ? [u.journeyName, u.relationship].filter(Boolean).join(" · ") : "No journey yet"}
                     </p>
                     <p className="mt-1 text-xs text-muted-foreground">
                       Joined {new Date(u.createdAt).toLocaleDateString()}
@@ -207,8 +207,8 @@ function AdminConsole({ currentUserId }: { currentUserId: string }) {
                   </div>
                 </div>
                 <div className="mt-3 flex flex-wrap gap-2">
-                  <ActionButton disabled={!u.profileId} onClick={() => setEditing(u)}>
-                    <Pencil className="size-3.5" /> Edit profile
+                  <ActionButton disabled={!u.memberId} onClick={() => setEditing(u)}>
+                    <Pencil className="size-3.5" /> Edit member
                   </ActionButton>
                   <ActionButton
                     disabled={!u.email || resetMutation.isPending}
@@ -235,10 +235,10 @@ function AdminConsole({ currentUserId }: { currentUserId: string }) {
 
       <EditDialog
         user={editing}
-        pending={profileMutation.isPending}
+        pending={memberMutation.isPending}
         onClose={() => setEditing(null)}
         onSave={(name, relationship) =>
-          editing?.profileId && profileMutation.mutate({ profileId: editing.profileId, name, relationship })
+          editing?.memberId && memberMutation.mutate({ memberId: editing.memberId, name, relationship })
         }
       />
 
@@ -248,7 +248,7 @@ function AdminConsole({ currentUserId }: { currentUserId: string }) {
             <DialogTitle>Delete this account?</DialogTitle>
           </DialogHeader>
           <p className="text-sm text-muted-foreground">
-            {confirmDelete?.email} will lose access permanently. Their challenge history stays with the couple.
+            {confirmDelete?.email} will lose access permanently. Their challenge history stays with the journey.
           </p>
           <DialogFooter>
             <button className="rounded-full px-4 py-2 text-sm" onClick={() => setConfirmDelete(null)}>
@@ -320,7 +320,7 @@ function EditDialog({
     >
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Edit member profile</DialogTitle>
+          <DialogTitle>Edit member member</DialogTitle>
         </DialogHeader>
         <div className="space-y-3">
           <label className="block text-sm">

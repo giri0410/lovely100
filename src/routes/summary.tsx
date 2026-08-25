@@ -23,10 +23,10 @@ function SummaryPage() {
   return (
     <AppShell>
       {({ stats, data, me }) => {
-        const done = stats.currentDay >= data.couple.duration;
-        const totalWalks = stats.perProfile.reduce((s, p) => s + p.walk.days, 0);
-        const totalHealthy = stats.perProfile.reduce((s, p) => s + p.food.healthyDays + p.food.cheatSundays, 0);
-        const t = copy({ kind: data.couple.kind, memberCount: stats.perProfile.length });
+        const done = stats.currentDay >= data.journey.duration;
+        const totalWalks = stats.perMember.reduce((s, p) => s + p.walk.days, 0);
+        const totalHealthy = stats.perMember.reduce((s, p) => s + p.food.healthyDays + p.food.cheatSundays, 0);
+        const t = copy({ kind: data.journey.kind, memberCount: stats.perMember.length });
 
         return (
           <div className="space-y-5 px-5 pb-8">
@@ -35,7 +35,7 @@ function SummaryPage() {
               subtitle={
                 done
                   ? t.summaryDoneSubtitle
-                  : `Day ${stats.currentDay} of ${data.couple.duration} — here's the story so far.`
+                  : `Day ${stats.currentDay} of ${data.journey.duration} — here's the story so far.`
               }
             />
 
@@ -46,17 +46,17 @@ function SummaryPage() {
                 <Stat label="Healthy days" value={`${totalHealthy}`} />
                 <Stat label="Money avoided" value={formatMoney(stats.totalSaved)} />
                 <Stat label="Certification" value={formatMinutes(stats.totalStudyMinutes)} />
-                <Stat label={t.bestStreakLabel} value={`${stats.coupleStreak.best} days`} />
+                <Stat label={t.bestStreakLabel} value={`${stats.journeyStreak.best} days`} />
                 <Stat label={t.perfectDaysLabel} value={`${stats.completedDaysTogether}`} />
               </div>
             </section>
 
             <section className="grid gap-4 sm:grid-cols-2">
-              {stats.perProfile.map((p) => (
-                <div key={p.profile.id} className="surface p-5">
+              {stats.perMember.map((p) => (
+                <div key={p.member.id} className="surface p-5">
                   <h2 className="text-lg">
-                    {p.profile.name}
-                    {p.profile.id === me.id ? " (you)" : ""}
+                    {p.member.name}
+                    {p.member.id === me.id ? " (you)" : ""}
                   </h2>
                   <div className="mt-3 space-y-1.5 text-sm">
                     <Row label="Completion" value={`${p.completionPct}%`} />
@@ -73,10 +73,10 @@ function SummaryPage() {
             <section className="surface p-5">
               <h2 className="text-lg">{t.timelineTitle}</h2>
               <ol className="mt-4 space-y-4 border-l border-border pl-5">
-                {MILESTONES.filter((m) => m <= data.couple.duration).map((m) => {
+                {MILESTONES.filter((m) => m <= data.journey.duration).map((m) => {
                   const iso = stats.dates[m - 1]!;
                   const reached = stats.currentDay >= m;
-                  const perfect = stats.perProfile.every(
+                  const perfect = stats.perMember.every(
                     (p) => completedCount(p.entriesByDate.get(iso)) === 4,
                   );
                   return (

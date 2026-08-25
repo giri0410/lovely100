@@ -1,8 +1,8 @@
 import {
   type AvoidedExpense,
-  type Couple,
+  type Journey,
   type DailyHabit,
-  type Profile,
+  type Member,
   computeStreak,
   completedCount,
   dateForDay,
@@ -11,8 +11,8 @@ import {
   todayISO,
 } from "./challenge";
 
-export interface ProfileStats {
-  profile: Profile;
+export interface MemberStats {
+  member: Member;
   entriesByDate: Map<string, DailyHabit>;
   daysElapsed: number;
   completedDays: number;
@@ -27,31 +27,31 @@ export interface ProfileStats {
   savedCount: number;
 }
 
-export interface CoupleStats {
+export interface JourneyStats {
   today: string;
   currentDay: number;
   dates: string[];
-  perProfile: ProfileStats[];
+  perMember: MemberStats[];
   teamScore: number;
   totalSaved: number;
   totalSavedCount: number;
   totalStudyMinutes: number;
-  coupleStreak: { current: number; best: number };
+  journeyStreak: { current: number; best: number };
   completedDaysTogether: number;
   overallPct: number;
 }
 
-export function buildStats(couple: Couple, profiles: Profile[], habits: DailyHabit[], expenses: AvoidedExpense[]): CoupleStats {
+export function buildStats(journey: Journey, members: Member[], habits: DailyHabit[], expenses: AvoidedExpense[]): JourneyStats {
   const today = todayISO();
-  const duration = couple.duration || 100;
-  const rawDay = dayNumber(couple.start_date, today);
+  const duration = journey.duration || 100;
+  const rawDay = dayNumber(journey.start_date, today);
   const currentDay = Math.min(Math.max(rawDay, 1), duration);
-  const dates = Array.from({ length: duration }, (_, i) => dateForDay(couple.start_date, i + 1));
+  const dates = Array.from({ length: duration }, (_, i) => dateForDay(journey.start_date, i + 1));
   const daysElapsed = Math.min(Math.max(rawDay, 0), duration);
 
-  const perProfile = profiles.map((profile) => {
+  const perMember = members.map((member) => {
     const entriesByDate = new Map<string, DailyHabit>();
-    habits.filter((h) => h.profile_id === profile.id).forEach((h) => entriesByDate.set(h.date, h));
+    habits.filter((h) => h.member_id === member.id).forEach((h) => entriesByDate.set(h.date, h));
 
     const past = dates.filter((d) => d <= today);
     let completedDays = 0;
@@ -87,12 +87,12 @@ export function buildStats(couple: Couple, profiles: Profile[], habits: DailyHab
     const done = (col: keyof DailyHabit) => (iso: string) => Boolean(entriesByDate.get(iso)?.[col]);
     const allDone = (iso: string) => completedCount(entriesByDate.get(iso)) === 4;
 
-    const myExpenses = expenses.filter((e) => e.profile_id === profile.id);
+    const myExpenses = expenses.filter((e) => e.member_id === member.id);
     const saved = myExpenses.reduce((s, e) => s + Number(e.amount || 0), 0);
 
     const elapsed = Math.max(past.length, 1);
     return {
-      profile,
+      member,
       entriesByDate,
       daysElapsed: past.length,
       completedDays,
@@ -119,30 +119,30 @@ export function buildStats(couple: Couple, profiles: Profile[], habits: DailyHab
       },
       saved,
       savedCount: myExpenses.length,
-    } satisfies ProfileStats;
+    } satisfies MemberStats;
   });
 
-  const teamScore = perProfile.length
-    ? Math.round(perProfile.reduce((s, p) => s + p.completionPct, 0) / perProfile.length)
+  const teamScore = perMember.length
+    ? Math.round(perMember.reduce((s, p) => s + p.completionPct, 0) / perMember.length)
     : 0;
 
-  const coupleAllDone = (iso: string) =>
-    perProfile.length > 0 && perProfile.every((p) => completedCount(p.entriesByDate.get(iso)) === 4);
+  const journeyAllDone = (iso: string) =>
+    perMember.length > 0 && perMember.every((p) => completedCount(p.entriesByDate.get(iso)) === 4);
 
   return {
     today,
     currentDay,
     dates,
-    perProfile,
+    perMember,
     teamScore,
     totalSaved: expenses.reduce((s, e) => s + Number(e.amount || 0), 0),
     totalSavedCount: expenses.length,
-    totalStudyMinutes: perProfile.reduce((s, p) => s + p.certification.minutes, 0),
-    coupleStreak: computeStreak(dates, coupleAllDone, today),
-    completedDaysTogether: dates.filter((d) => d <= today && coupleAllDone(d)).length,
+    totalStudyMinutes: perMember.reduce((s, p) => s + p.certification.minutes, 0),
+    journeyStreak: computeStreak(dates, journeyAllDone, today),
+    completedDaysTogether: dates.filter((d) => d <= today && journeyAllDone(d)).length,
     overallPct: teamScore,
     daysElapsed,
-  } as CoupleStats & { daysElapsed: number };
+  } as JourneyStats & { daysElapsed: number };
 }
 
 export interface WeekStats {
@@ -163,14 +163,14 @@ export interface WeekStats {
  * day rather than a healthy one.
  *
  * `expenses` is whatever scope the caller wants totalled; the review passes the
- * whole couple's, matching what it has always shown.
+ * whole journey's, matching what it has always shown.
  */
 export function buildWeekStats(
-  profileStats: ProfileStats | undefined,
+  memberStats: MemberStats | undefined,
   weekDates: string[],
   expenses: AvoidedExpense[],
 ): WeekStats {
-  const entry = (iso: string) => profileStats?.entriesByDate.get(iso);
+  const entry = (iso: string) => memberStats?.entriesByDate.get(iso);
   let walkDays = 0;
   let healthyDays = 0;
   let cheatSundays = 0;

@@ -19,8 +19,8 @@ import {
 function entry(patch: Partial<DailyHabit> = {}): DailyHabit {
   return {
     id: "e",
-    couple_id: "c",
-    profile_id: "p",
+    journey_id: "c",
+    member_id: "p",
     date: "2026-01-01",
     walk_completed: false,
     walk_duration: null,

@@ -8,11 +8,11 @@ export interface AdminUserRow {
   lastSignInAt: string | null;
   emailConfirmed: boolean;
   isAdmin: boolean;
-  profileId: string | null;
+  memberId: string | null;
   name: string | null;
   relationship: string | null;
-  coupleId: string | null;
-  coupleName: string | null;
+  journeyId: string | null;
+  journeyName: string | null;
 }
 
 async function assertAdmin(context: { supabase: any; userId: string }) {
@@ -71,22 +71,22 @@ export const listUsers = createServerFn({ method: "GET" })
     });
     if (authErr) throw new Error(authErr.message);
 
-    const [{ data: profiles, error: pErr }, { data: couples, error: cErr }, { data: roles, error: rErr }] =
+    const [{ data: members, error: pErr }, { data: journeys, error: cErr }, { data: roles, error: rErr }] =
       await Promise.all([
-        supabaseAdmin.from("profiles").select("id, auth_user_id, name, relationship, couple_id"),
-        supabaseAdmin.from("couples").select("id, name"),
+        supabaseAdmin.from("members").select("id, auth_user_id, name, relationship, journey_id"),
+        supabaseAdmin.from("journeys").select("id, name"),
         (supabaseAdmin as any).from("user_roles").select("user_id, role"),
       ]);
     if (pErr || cErr || rErr) throw new Error((pErr ?? cErr ?? rErr)!.message);
 
-    const coupleName = new Map((couples ?? []).map((c) => [c.id, c.name]));
-    const profileByAuth = new Map((profiles ?? []).filter((p) => p.auth_user_id).map((p) => [p.auth_user_id!, p]));
+    const journeyName = new Map((journeys ?? []).map((c) => [c.id, c.name]));
+    const memberByAuth = new Map((members ?? []).filter((p) => p.auth_user_id).map((p) => [p.auth_user_id!, p]));
     const adminIds = new Set(
       ((roles ?? []) as { user_id: string; role: string }[]).filter((r) => r.role === "admin").map((r) => r.user_id),
     );
 
     return authData.users.map((u) => {
-      const p = profileByAuth.get(u.id);
+      const p = memberByAuth.get(u.id);
       return {
         authUserId: u.id,
         email: u.email ?? null,
@@ -94,11 +94,11 @@ export const listUsers = createServerFn({ method: "GET" })
         lastSignInAt: u.last_sign_in_at ?? null,
         emailConfirmed: Boolean(u.email_confirmed_at),
         isAdmin: adminIds.has(u.id),
-        profileId: p?.id ?? null,
+        memberId: p?.id ?? null,
         name: p?.name ?? null,
         relationship: p?.relationship ?? null,
-        coupleId: p?.couple_id ?? null,
-        coupleName: p?.couple_id ? (coupleName.get(p.couple_id) ?? null) : null,
+        journeyId: p?.journey_id ?? null,
+        journeyName: p?.journey_id ? (journeyName.get(p.journey_id) ?? null) : null,
       };
     });
   });
@@ -128,16 +128,16 @@ export const setUserAdmin = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
-export const updateUserProfile = createServerFn({ method: "POST" })
+export const updateUserMember = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: { profileId: string; name: string; relationship: string }) => input)
+  .inputValidator((input: { memberId: string; name: string; relationship: string }) => input)
   .handler(async ({ data, context }) => {
     await assertAdmin(context as any);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { error } = await supabaseAdmin
-      .from("profiles")
+      .from("members")
       .update({ name: data.name.trim(), relationship: data.relationship.trim() || null })
-      .eq("id", data.profileId);
+      .eq("id", data.memberId);
     if (error) throw new Error(error.message);
     return { ok: true };
   });
@@ -149,8 +149,8 @@ export const deleteUser = createServerFn({ method: "POST" })
     await assertAdmin(context as any);
     if (data.userId === context.userId) throw new Error("You cannot delete your own account here.");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    // Detach the profile so couple history survives, then remove the login.
-    await supabaseAdmin.from("profiles").update({ auth_user_id: null }).eq("auth_user_id", data.userId);
+    // Detach the member so journey history survives, then remove the login.
+    await supabaseAdmin.from("members").update({ auth_user_id: null }).eq("auth_user_id", data.userId);
     const { error } = await supabaseAdmin.auth.admin.deleteUser(data.userId);
     if (error) throw new Error(error.message);
     return { ok: true };

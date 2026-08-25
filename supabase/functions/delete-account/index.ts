@@ -64,15 +64,15 @@ Deno.serve(async (request) => {
   const userId = user.id;
   if (!userId) return json({ error: "session is not valid" }, 401);
 
-  // Remove the profile first. Habits, avoided expenses, weekly reviews and
+  // Remove the member first. Habits, avoided expenses, weekly reviews and
   // reminders all reference it ON DELETE CASCADE, so this clears the person's
   // own history in one statement. Their partner's rows are untouched.
-  const profileDelete = await admin(`/rest/v1/profiles?auth_user_id=eq.${userId}`, {
+  const memberDelete = await admin(`/rest/v1/members?auth_user_id=eq.${userId}`, {
     method: "DELETE",
     headers: { Prefer: "return=minimal" },
   });
-  if (!profileDelete.ok) {
-    return json({ error: "could not remove your challenge data", detail: await profileDelete.text() }, 500);
+  if (!memberDelete.ok) {
+    return json({ error: "could not remove your challenge data", detail: await memberDelete.text() }, 500);
   }
 
   // Any admin role grant would be orphaned otherwise.

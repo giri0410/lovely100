@@ -5,12 +5,12 @@
  * replace `src/mock/api.ts` with real network calls — the UI and hooks only
  * ever talk to that module, never to this file directly.
  */
-import { addDays, toISO, type AvoidedExpense, type Couple, type DailyHabit, type Profile } from "@/lib/challenge";
+import { addDays, toISO, type AvoidedExpense, type Journey, type DailyHabit, type Member } from "@/lib/challenge";
 
 export interface MockWeeklyReview {
   id: string;
-  couple_id: string;
-  profile_id: string;
+  journey_id: string;
+  member_id: string;
   week_number: number;
   what_went_well: string | null;
   what_to_improve: string | null;
@@ -18,7 +18,7 @@ export interface MockWeeklyReview {
 
 export interface MockReminder {
   id: string;
-  profile_id: string;
+  member_id: string;
   reminder_type: string;
   enabled: boolean;
   reminder_time: string;
@@ -36,8 +36,8 @@ export interface MockUser {
 
 export interface MockDatabase {
   users: MockUser[];
-  couples: Couple[];
-  profiles: Profile[];
+  journeys: Journey[];
+  members: Member[];
   habits: DailyHabit[];
   expenses: AvoidedExpense[];
   reviews: MockWeeklyReview[];
@@ -45,9 +45,9 @@ export interface MockDatabase {
   sessionUserId: string | null;
 }
 
-export const DEMO_COUPLE_ID = "couple-demo";
-export const DEMO_ALEX_ID = "profile-alex";
-export const DEMO_PRIYA_ID = "profile-priya";
+export const DEMO_JOURNEY_ID = "journey-demo";
+export const DEMO_ALEX_ID = "member-alex";
+export const DEMO_PRIYA_ID = "member-priya";
 export const DEMO_DAYS = 9;
 
 export function uid(prefix = "id"): string {
@@ -67,15 +67,15 @@ const EXPENSE_IDEAS: { description: string; reason: string; amount: number }[] =
 const STUDY_TOPICS = ["AWS Solutions Architect", "Data structures", "Product analytics", "Financial planning"];
 
 function makeHabit(
-  profileId: string,
+  memberId: string,
   date: string,
   done: { walk: boolean; food: boolean; spending: boolean; cert: boolean },
   index: number,
 ): DailyHabit {
   return {
     id: uid("habit"),
-    couple_id: DEMO_COUPLE_ID,
-    profile_id: profileId,
+    journey_id: DEMO_JOURNEY_ID,
+    member_id: memberId,
     date,
     walk_completed: done.walk,
     walk_duration: done.walk ? 30 + (index % 3) * 5 : null,
@@ -117,8 +117,8 @@ export function createSeedDatabase(): MockDatabase {
   const today = toISO(new Date());
   const startDate = addDays(today, -(DEMO_DAYS - 1));
 
-  const couple: Couple = {
-    id: DEMO_COUPLE_ID,
+  const journey: Journey = {
+    id: DEMO_JOURNEY_ID,
     name: "Alex & Priya's 100 Days",
     start_date: startDate,
     duration: 100,
@@ -127,9 +127,9 @@ export function createSeedDatabase(): MockDatabase {
     kind: "shared",
   };
 
-  const profiles: Profile[] = [
-    { id: DEMO_ALEX_ID, auth_user_id: null, couple_id: couple.id, name: "Alex", relationship: "me", avatar: null },
-    { id: DEMO_PRIYA_ID, auth_user_id: null, couple_id: couple.id, name: "Priya", relationship: "wife", avatar: null },
+  const members: Member[] = [
+    { id: DEMO_ALEX_ID, auth_user_id: null, journey_id: journey.id, name: "Alex", relationship: "me", avatar: null },
+    { id: DEMO_PRIYA_ID, auth_user_id: null, journey_id: journey.id, name: "Priya", relationship: "wife", avatar: null },
   ];
 
   const habits: DailyHabit[] = [];
@@ -145,7 +145,7 @@ export function createSeedDatabase(): MockDatabase {
 
   const expenses: AvoidedExpense[] = EXPENSE_IDEAS.map((e, i) => ({
     id: uid("expense"),
-    profile_id: i % 2 === 0 ? DEMO_ALEX_ID : DEMO_PRIYA_ID,
+    member_id: i % 2 === 0 ? DEMO_ALEX_ID : DEMO_PRIYA_ID,
     date: addDays(startDate, Math.min(i, DEMO_DAYS - 1)),
     amount: e.amount,
     description: e.description,
@@ -155,16 +155,16 @@ export function createSeedDatabase(): MockDatabase {
   const reviews: MockWeeklyReview[] = [
     {
       id: uid("review"),
-      couple_id: couple.id,
-      profile_id: DEMO_ALEX_ID,
+      journey_id: journey.id,
+      member_id: DEMO_ALEX_ID,
       week_number: 1,
       what_went_well: "Walked together six mornings and stuck to the meal plan.",
       what_to_improve: "Study earlier in the evening instead of after 10pm.",
     },
     {
       id: uid("review"),
-      couple_id: couple.id,
-      profile_id: DEMO_PRIYA_ID,
+      journey_id: journey.id,
+      member_id: DEMO_PRIYA_ID,
       week_number: 1,
       what_went_well: "Skipped three deliveries and cooked instead.",
       what_to_improve: "Plan Sunday's cheat meal at home so it stays budget-friendly.",
@@ -172,8 +172,8 @@ export function createSeedDatabase(): MockDatabase {
   ];
 
   const reminders: MockReminder[] = [
-    { id: uid("rem"), profile_id: DEMO_ALEX_ID, reminder_type: "walk", enabled: true, reminder_time: "06:30" },
-    { id: uid("rem"), profile_id: DEMO_ALEX_ID, reminder_type: "daily", enabled: true, reminder_time: "21:30" },
+    { id: uid("rem"), member_id: DEMO_ALEX_ID, reminder_type: "walk", enabled: true, reminder_time: "06:30" },
+    { id: uid("rem"), member_id: DEMO_ALEX_ID, reminder_type: "daily", enabled: true, reminder_time: "21:30" },
   ];
 
   const users: MockUser[] = [
@@ -188,5 +188,5 @@ export function createSeedDatabase(): MockDatabase {
     },
   ];
 
-  return { users, couples: [couple], profiles, habits, expenses, reviews, reminders, sessionUserId: null };
+  return { users, journeys: [journey], members, habits, expenses, reviews, reminders, sessionUserId: null };
 }

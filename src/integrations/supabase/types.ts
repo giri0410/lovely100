@@ -17,52 +17,52 @@ export type Database = {
       avoided_expenses: {
         Row: {
           amount: number
-          couple_id: string
+          journey_id: string
           created_at: string
           date: string
           description: string | null
           id: string
-          profile_id: string
+          member_id: string
           reason: string | null
         }
         Insert: {
           amount?: number
-          couple_id: string
+          journey_id: string
           created_at?: string
           date?: string
           description?: string | null
           id?: string
-          profile_id: string
+          member_id: string
           reason?: string | null
         }
         Update: {
           amount?: number
-          couple_id?: string
+          journey_id?: string
           created_at?: string
           date?: string
           description?: string | null
           id?: string
-          profile_id?: string
+          member_id?: string
           reason?: string | null
         }
         Relationships: [
           {
-            foreignKeyName: "avoided_expenses_couple_id_fkey"
-            columns: ["couple_id"]
+            foreignKeyName: "avoided_expenses_journey_id_fkey"
+            columns: ["journey_id"]
             isOneToOne: false
-            referencedRelation: "couples"
+            referencedRelation: "journeys"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "avoided_expenses_profile_id_fkey"
-            columns: ["profile_id"]
+            foreignKeyName: "avoided_expenses_member_id_fkey"
+            columns: ["member_id"]
             isOneToOne: false
-            referencedRelation: "profiles"
+            referencedRelation: "members"
             referencedColumns: ["id"]
           },
         ]
       }
-      couples: {
+      journeys: {
         Row: {
           created_at: string
           duration: number
@@ -100,13 +100,13 @@ export type Database = {
           certification_completed: boolean
           certification_minutes: number | null
           certification_topic: string | null
-          couple_id: string
+          journey_id: string
           created_at: string
           date: string
           healthy_food_completed: boolean
           id: string
           notes: string | null
-          profile_id: string
+          member_id: string
           unnecessary_spending_completed: boolean
           updated_at: string
           walk_completed: boolean
@@ -116,13 +116,13 @@ export type Database = {
           certification_completed?: boolean
           certification_minutes?: number | null
           certification_topic?: string | null
-          couple_id: string
+          journey_id: string
           created_at?: string
           date: string
           healthy_food_completed?: boolean
           id?: string
           notes?: string | null
-          profile_id: string
+          member_id: string
           unnecessary_spending_completed?: boolean
           updated_at?: string
           walk_completed?: boolean
@@ -132,13 +132,13 @@ export type Database = {
           certification_completed?: boolean
           certification_minutes?: number | null
           certification_topic?: string | null
-          couple_id?: string
+          journey_id?: string
           created_at?: string
           date?: string
           healthy_food_completed?: boolean
           id?: string
           notes?: string | null
-          profile_id?: string
+          member_id?: string
           unnecessary_spending_completed?: boolean
           updated_at?: string
           walk_completed?: boolean
@@ -146,26 +146,26 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "daily_habits_couple_id_fkey"
-            columns: ["couple_id"]
+            foreignKeyName: "daily_habits_journey_id_fkey"
+            columns: ["journey_id"]
             isOneToOne: false
-            referencedRelation: "couples"
+            referencedRelation: "journeys"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "daily_habits_profile_id_fkey"
-            columns: ["profile_id"]
+            foreignKeyName: "daily_habits_member_id_fkey"
+            columns: ["member_id"]
             isOneToOne: false
-            referencedRelation: "profiles"
+            referencedRelation: "members"
             referencedColumns: ["id"]
           },
         ]
       }
-      profiles: {
+      members: {
         Row: {
           auth_user_id: string | null
           avatar: string | null
-          couple_id: string
+          journey_id: string
           created_at: string
           id: string
           name: string
@@ -174,7 +174,7 @@ export type Database = {
         Insert: {
           auth_user_id?: string | null
           avatar?: string | null
-          couple_id: string
+          journey_id: string
           created_at?: string
           id?: string
           name: string
@@ -183,7 +183,7 @@ export type Database = {
         Update: {
           auth_user_id?: string | null
           avatar?: string | null
-          couple_id?: string
+          journey_id?: string
           created_at?: string
           id?: string
           name?: string
@@ -191,10 +191,10 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "profiles_couple_id_fkey"
-            columns: ["couple_id"]
+            foreignKeyName: "members_journey_id_fkey"
+            columns: ["journey_id"]
             isOneToOne: false
-            referencedRelation: "couples"
+            referencedRelation: "journeys"
             referencedColumns: ["id"]
           },
         ]
@@ -204,7 +204,7 @@ export type Database = {
           created_at: string
           enabled: boolean
           id: string
-          profile_id: string
+          member_id: string
           reminder_time: string
           reminder_type: string
         }
@@ -212,7 +212,7 @@ export type Database = {
           created_at?: string
           enabled?: boolean
           id?: string
-          profile_id: string
+          member_id: string
           reminder_time?: string
           reminder_type: string
         }
@@ -220,16 +220,16 @@ export type Database = {
           created_at?: string
           enabled?: boolean
           id?: string
-          profile_id?: string
+          member_id?: string
           reminder_time?: string
           reminder_type?: string
         }
         Relationships: [
           {
-            foreignKeyName: "reminders_profile_id_fkey"
-            columns: ["profile_id"]
+            foreignKeyName: "reminders_member_id_fkey"
+            columns: ["member_id"]
             isOneToOne: false
-            referencedRelation: "profiles"
+            referencedRelation: "members"
             referencedColumns: ["id"]
           },
         ]
@@ -257,45 +257,45 @@ export type Database = {
       }
       weekly_reviews: {
         Row: {
-          couple_id: string
+          journey_id: string
           created_at: string
           id: string
-          profile_id: string
+          member_id: string
           week_number: number
           what_to_improve: string | null
           what_went_well: string | null
         }
         Insert: {
-          couple_id: string
+          journey_id: string
           created_at?: string
           id?: string
-          profile_id: string
+          member_id: string
           week_number: number
           what_to_improve?: string | null
           what_went_well?: string | null
         }
         Update: {
-          couple_id?: string
+          journey_id?: string
           created_at?: string
           id?: string
-          profile_id?: string
+          member_id?: string
           week_number?: number
           what_to_improve?: string | null
           what_went_well?: string | null
         }
         Relationships: [
           {
-            foreignKeyName: "weekly_reviews_couple_id_fkey"
-            columns: ["couple_id"]
+            foreignKeyName: "weekly_reviews_journey_id_fkey"
+            columns: ["journey_id"]
             isOneToOne: false
-            referencedRelation: "couples"
+            referencedRelation: "journeys"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "weekly_reviews_profile_id_fkey"
-            columns: ["profile_id"]
+            foreignKeyName: "weekly_reviews_member_id_fkey"
+            columns: ["member_id"]
             isOneToOne: false
-            referencedRelation: "profiles"
+            referencedRelation: "members"
             referencedColumns: ["id"]
           },
         ]
@@ -305,14 +305,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      create_couple_with_profile: {
+      create_journey_with_member: {
         Args: {
-          _couple_name: string
-          _profile_name: string
+          _journey_name: string
+          _member_name: string
           _relationship: string
           _kind: string
         }
-        Returns: Database["public"]["Tables"]["couples"]["Row"]
+        Returns: Database["public"]["Tables"]["journeys"]["Row"]
       }
       has_role: {
         Args: {
@@ -321,16 +321,16 @@ export type Database = {
         }
         Returns: boolean
       }
-      join_couple_by_code: {
+      join_journey_by_code: {
         Args: {
           _invite_code: string
           _name: string
           _relationship: string
         }
-        Returns: Database["public"]["Tables"]["couples"]["Row"]
+        Returns: Database["public"]["Tables"]["journeys"]["Row"]
       }
-      my_couple_id: { Args: never; Returns: string }
-      my_profile_id: { Args: never; Returns: string }
+      my_journey_id: { Args: never; Returns: string }
+      my_member_id: { Args: never; Returns: string }
     }
     Enums: {
       app_role: "admin" | "user"
