@@ -9,11 +9,20 @@ import type { Member } from "@/lib/challenge";
 import { cn } from "@/lib/utils";
 
 /** The five primary destinations — also the mobile bottom bar. */
+/**
+ * Five destinations, which is the most a phone bottom bar can hold before the
+ * targets get too narrow to hit reliably.
+ *
+ * Memories is here rather than tucked away because keeping one is a daily act
+ * in a product about a hundred days of them. Money moved to the secondary list:
+ * it was over-weighted as one of five when spending is now one goal category
+ * among many.
+ */
 const NAV = [
   { to: "/today", label: "Today", icon: Home },
   { to: "/calendar", label: "Calendar", icon: CalendarDays },
-  { to: "/stats", label: "Stats", icon: TrendingUp },
-  { to: "/money", label: "Money", icon: PiggyBank },
+  { to: "/memories", label: "Memories", icon: Camera },
+  { to: "/analytics", label: "Analytics", icon: TrendingUp },
   { to: "/settings", label: "Settings", icon: Settings },
 ] as const;
 
@@ -24,7 +33,7 @@ const NAV = [
  */
 const SECONDARY_NAV = [
   { to: "/goals", label: "Your goals", icon: Target },
-  { to: "/memories", label: "Memories", icon: Camera },
+  { to: "/money", label: "Money avoided", icon: PiggyBank },
   { to: "/review", label: "Weekly review", icon: NotebookPen },
   { to: "/summary", label: "The whole story", icon: Sparkles },
 ] as const;

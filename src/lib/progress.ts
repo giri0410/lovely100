@@ -95,6 +95,9 @@ export interface MemberProgress {
   /** Distinct dates with at least one log — the show-up number. */
   activeDays: number;
 
+  /** Those dates, ascending. Exposed so analytics need not recompute them. */
+  loggedDates: string[];
+
   /** activeDays over elapsed days, or null before any day has elapsed. */
   showUpPct: number | null;
 
@@ -362,6 +365,7 @@ export function buildMemberProgress(
     member,
     goals: visible.map((g) => buildGoalProgress(g, mine, ctx)),
     activeDays,
+    loggedDates: elapsed.filter((d) => loggedDates.has(d)),
     showUpPct: countable.length ? pct(activeDays, countable.length) : null,
     dailyConsistencyPct: dailyConsistency(visible, mine, ctx),
     momentCount: mine.filter((l) => l.goal_id === null).length,
