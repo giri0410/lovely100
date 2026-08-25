@@ -157,30 +157,34 @@ export interface StreakResult {
 }
 
 /**
- * Streaks over a list of ISO dates ordered ascending, with a predicate for "done".
- * The current streak counts back from today (today itself doesn't break it if incomplete).
+ * Streaks over a list of ordered, lexicographically comparable period keys.
+ *
+ * Usually ISO dates, but any ascending string works — weekly goals pass
+ * zero-padded week keys, which is why the parameters are not named `dates`.
+ * `current` is the key for the period in progress; it does not break a streak
+ * when incomplete, because a day (or week) you are still living is not a miss.
  */
-export function computeStreak(dates: string[], done: (iso: string) => boolean, today: string): StreakResult {
+export function computeStreak(keys: string[], done: (key: string) => boolean, current: string): StreakResult {
   let best = 0;
   let run = 0;
-  for (const iso of dates) {
-    if (iso > today) break;
-    if (done(iso)) {
+  for (const key of keys) {
+    if (key > current) break;
+    if (done(key)) {
       run += 1;
       best = Math.max(best, run);
     } else {
       run = 0;
     }
   }
-  let current = 0;
-  const past = dates.filter((d) => d <= today);
+  let streak = 0;
+  const past = keys.filter((k) => k <= current);
   for (let i = past.length - 1; i >= 0; i--) {
-    const iso = past[i]!;
-    if (done(iso)) current += 1;
-    else if (iso === today) continue;
+    const key = past[i]!;
+    if (done(key)) streak += 1;
+    else if (key === current) continue;
     else break;
   }
-  return { current, best };
+  return { current: streak, best };
 }
 
 export const MILESTONES = [7, 14, 30, 50, 75, 100];
