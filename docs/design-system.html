@@ -1,0 +1,556 @@
+<title>Lovely 100 Design System</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+
+<style>
+  /* ── Tokens ───────────────────────────────────────────────────────────────
+     These are the app's own values, not a separate palette for the document.
+     A design-system page that invents its own colours cannot be checked
+     against the product, so every swatch below is the literal token.
+     Light lives on bare :root; dark redefines only the tokens, twice, so both
+     the OS preference and an explicit choice resolve. */
+  :root {
+    --ground: #fefaf2;
+    --plane: #fffffc;
+    --ink: #35251e;
+    --ink-2: #5c4a40;
+    --muted: #7a685d;
+    --line: #e5ddd1;
+    --line-soft: #efe8dc;
+    --brand: #bc502d;
+    --brand-soft: #f4ecdd;
+    --good: #34815d;
+    --bad: #d33a3c;
+    --warn: #f2bd68;
+    --shadow: 0 1px 2px rgba(53, 37, 30, .04), 0 8px 24px rgba(53, 37, 30, .06);
+    --measure: 68ch;
+  }
+  :root:not([data-theme="light"]) {
+    @media (prefers-color-scheme: dark) {
+      --ground: #1b110d;
+      --plane: #281c18;
+      --ink: #f5f1ea;
+      --ink-2: #d6cdc4;
+      --muted: #aea298;
+      --line: #3a2c25;
+      --line-soft: #2f231d;
+      --brand: #e67d58;
+      --brand-soft: #322620;
+      --good: #5cab83;
+      --bad: #e85854;
+      --warn: #e8b45e;
+      --shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 8px 24px rgba(0, 0, 0, .35);
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground: #1b110d;
+    --plane: #281c18;
+    --ink: #f5f1ea;
+    --ink-2: #d6cdc4;
+    --muted: #aea298;
+    --line: #3a2c25;
+    --line-soft: #2f231d;
+    --brand: #e67d58;
+    --brand-soft: #322620;
+    --good: #5cab83;
+    --bad: #e85854;
+    --warn: #e8b45e;
+    --shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 8px 24px rgba(0, 0, 0, .35);
+  }
+
+  *, *::before, *::after { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--ground);
+    color: var(--ink);
+    font-family: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+    font-size: 16px;
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap {
+    max-width: 1080px;
+    margin: 0 auto;
+    padding: 0 clamp(1.25rem, 4vw, 3rem) 6rem;
+  }
+
+  /* ── Type ─────────────────────────────────────────────────────────────── */
+  h1, h2, h3, h4 {
+    font-family: Fraunces, ui-serif, Georgia, serif;
+    font-weight: 600;
+    letter-spacing: -.015em;
+    text-wrap: balance;
+    margin: 0;
+  }
+  h1 { font-size: clamp(2.25rem, 1.6rem + 2.8vw, 3.25rem); line-height: 1.03; font-variation-settings: "opsz" 120; }
+  h2 { font-size: clamp(1.5rem, 1.2rem + 1.1vw, 2rem); line-height: 1.14; font-variation-settings: "opsz" 60; margin-top: 4.5rem; }
+  h3 { font-size: 1.1875rem; line-height: 1.3; font-variation-settings: "opsz" 24; margin-top: 2.5rem; }
+  h4 { font-size: 1rem; line-height: 1.4; font-variation-settings: "opsz" 18; margin-top: 1.75rem; }
+  p, ul, ol { margin: 0; }
+  p { max-width: var(--measure); text-wrap: pretty; }
+  li { max-width: var(--measure); }
+  .stack { display: flex; flex-direction: column; gap: 1rem; }
+  .stack-sm { display: flex; flex-direction: column; gap: .5rem; }
+  .lede { font-size: 1.125rem; color: var(--ink-2); max-width: 60ch; }
+
+  .eyebrow {
+    font-size: .6875rem;
+    font-weight: 700;
+    letter-spacing: .16em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin: 0;
+  }
+  code, .mono, td.num, th.num {
+    font-family: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-variant-numeric: tabular-nums;
+  }
+  code {
+    font-size: .8125em;
+    background: var(--brand-soft);
+    padding: .1em .35em;
+    border-radius: 4px;
+  }
+  a { color: var(--brand); text-underline-offset: 3px; }
+  strong { font-weight: 600; }
+
+  /* ── Header ───────────────────────────────────────────────────────────── */
+  header.masthead {
+    padding: clamp(3rem, 8vw, 5.5rem) 0 0;
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+  }
+  .meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--line);
+    font-size: .8125rem;
+    color: var(--muted);
+  }
+  .meta div { display: flex; flex-direction: column; gap: .15rem; }
+  .meta dt { font-weight: 600; color: var(--ink-2); }
+
+  /* ── Blocks ───────────────────────────────────────────────────────────── */
+  .card {
+    background: var(--plane);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 1.5rem;
+    box-shadow: var(--shadow);
+  }
+  .law {
+    background: var(--brand-soft);
+    border: 1px solid var(--line);
+    border-left: 3px solid var(--brand);
+    border-radius: 4px 14px 14px 4px;
+    padding: 1.5rem;
+  }
+  .note {
+    border-left: 2px solid var(--line);
+    padding-left: 1rem;
+    color: var(--ink-2);
+    font-size: .9375rem;
+    max-width: var(--measure);
+  }
+
+  /* ── Swatches ─────────────────────────────────────────────────────────── */
+  .swatches {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(148px, 1fr));
+    gap: .75rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .swatch { display: flex; flex-direction: column; gap: .5rem; }
+  .chip {
+    height: 60px;
+    border-radius: 10px;
+    border: 1px solid var(--line);
+  }
+  .swatch b { font-size: .8125rem; font-weight: 600; }
+  .swatch span { font-size: .75rem; color: var(--muted); }
+
+  .series {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: .75rem;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+  .series .chip { height: 44px; }
+
+  /* ── Tables ───────────────────────────────────────────────────────────── */
+  .scroll { overflow-x: auto; margin-top: 1rem; }
+  table { border-collapse: collapse; width: 100%; font-size: .875rem; min-width: 30rem; }
+  caption { text-align: left; color: var(--muted); font-size: .8125rem; padding-bottom: .6rem; }
+  th, td { text-align: left; padding: .55rem .75rem .55rem 0; border-bottom: 1px solid var(--line-soft); vertical-align: top; }
+  th { font-weight: 600; color: var(--muted); font-size: .75rem; letter-spacing: .04em; text-transform: uppercase; }
+  td.num, th.num { text-align: right; padding-right: 0; }
+  tbody tr:last-child td { border-bottom: none; }
+
+  .tag {
+    display: inline-block;
+    font-size: .6875rem;
+    font-weight: 600;
+    letter-spacing: .04em;
+    padding: .1rem .45rem;
+    border-radius: 999px;
+    white-space: nowrap;
+  }
+  .tag.pass { color: var(--good); background: color-mix(in oklab, var(--good) 14%, transparent); }
+  .tag.fail { color: var(--bad); background: color-mix(in oklab, var(--bad) 14%, transparent); }
+
+  /* ── Type specimen ────────────────────────────────────────────────────── */
+  .specimen { display: flex; flex-direction: column; gap: 1.1rem; }
+  .specimen > div { display: grid; grid-template-columns: 6.5rem 1fr; gap: 1rem; align-items: baseline; }
+  .specimen .label { font-size: .75rem; color: var(--muted); font-family: "IBM Plex Mono", monospace; }
+  .sp-display { font-family: Fraunces, serif; font-size: 2.5rem; font-variation-settings: "opsz" 120; line-height: 1.05; }
+  .sp-title { font-family: Fraunces, serif; font-size: 1.75rem; font-variation-settings: "opsz" 60; }
+  .sp-heading { font-family: Fraunces, serif; font-size: 1.1875rem; font-variation-settings: "opsz" 24; }
+  .sp-body { font-size: 1rem; }
+  .sp-small { font-size: .875rem; }
+  .sp-tiny { font-size: .75rem; }
+
+  /* ── Nav diagram ──────────────────────────────────────────────────────── */
+  .ia { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
+  .ia ol, .ia ul { list-style: none; margin: .75rem 0 0; padding: 0; display: flex; flex-direction: column; gap: .4rem; }
+  .ia li { font-size: .875rem; display: flex; gap: .5rem; align-items: baseline; }
+  .ia .gone { color: var(--muted); text-decoration: line-through; }
+  .ia .new { color: var(--brand); font-weight: 600; }
+
+  hr { border: none; border-top: 1px solid var(--line); margin: 3.5rem 0 0; }
+
+  :focus-visible { outline: 2px solid var(--brand); outline-offset: 3px; border-radius: 4px; }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
+  }
+</style>
+
+<div class="wrap">
+
+  <header class="masthead">
+    <p class="eyebrow">Design system · Lovely 100</p>
+    <h1>A hundred days, told honestly</h1>
+    <p class="lede">
+      The reference for how Lovely 100 looks and behaves — tokens, type, components, and the one
+      rule that shapes more of this product than any colour choice does.
+    </p>
+    <div class="meta">
+      <div><dt>Status</dt><dd>Current — reflects <code>src/styles.css</code></dd></div>
+      <div><dt>Faces</dt><dd>Fraunces · Plus Jakarta Sans</dd></div>
+      <div><dt>Colour space</dt><dd>OKLCH</dd></div>
+      <div><dt>Themes</dt><dd>Light and dark, both authored</dd></div>
+    </div>
+  </header>
+
+  <h2>The law: never show a number you can't defend</h2>
+  <div class="stack">
+    <div class="law stack">
+      <p>
+        <strong>A percentage exists only where a real denominator does.</strong> Everywhere else the
+        interface shows a count, or a dash. It never shows <code>0%</code> to mean "we don't know yet",
+        and it never averages percentages across goals that measure different things.
+      </p>
+      <p>
+        <strong>An untouched today is not a miss.</strong> A day still being lived is excluded from
+        every denominator until something is logged against it.
+      </p>
+      <p>
+        <strong>Nothing is inferred from a missing value.</strong> If a number wasn't typed, it doesn't
+        exist.
+      </p>
+    </div>
+    <p class="note">
+      This is not a philosophical preference. The engine this replaced counted every unrecorded
+      duration as 30 minutes, so on real data it reported 250 minutes of walking where 100 had been
+      recorded — it invented 150. "Walk 30 minutes a day" and "visit 10 places" share no denominator,
+      so any single figure combining them is fiction. Design decisions downstream of this rule:
+      the em dash, the count-instead-of-percentage fallback, the hollow final point on a trend line,
+      and the absent column rather than a zero-height one.
+    </p>
+  </div>
+
+  <h2>Colour</h2>
+  <div class="stack">
+    <p>
+      A warm, low-chroma ground with a single terracotta accent. Neutrals are hue-biased toward the
+      accent rather than pure grey, so the whole surface reads as one material. Semantic colours
+      (success, destructive, warm) are reserved for state and never used as decoration.
+    </p>
+
+    <h3>Core tokens — light</h3>
+    <ul class="swatches">
+      <li class="swatch"><span class="chip" style="background:#fefaf2"></span><b>background</b><span class="mono">#fefaf2</span></li>
+      <li class="swatch"><span class="chip" style="background:#fffffc"></span><b>card</b><span class="mono">#fffffc</span></li>
+      <li class="swatch"><span class="chip" style="background:#35251e"></span><b>foreground</b><span class="mono">#35251e</span></li>
+      <li class="swatch"><span class="chip" style="background:#7a685d"></span><b>muted-foreground</b><span class="mono">#7a685d</span></li>
+      <li class="swatch"><span class="chip" style="background:#bc502d"></span><b>primary</b><span class="mono">#bc502d</span></li>
+      <li class="swatch"><span class="chip" style="background:#34815d"></span><b>success</b><span class="mono">#34815d</span></li>
+      <li class="swatch"><span class="chip" style="background:#f2bd68"></span><b>warm</b><span class="mono">#f2bd68</span></li>
+      <li class="swatch"><span class="chip" style="background:#d33a3c"></span><b>destructive</b><span class="mono">#d33a3c</span></li>
+      <li class="swatch"><span class="chip" style="background:#e5ddd1"></span><b>border</b><span class="mono">#e5ddd1</span></li>
+    </ul>
+
+    <h3>Core tokens — dark</h3>
+    <ul class="swatches">
+      <li class="swatch"><span class="chip" style="background:#1b110d"></span><b>background</b><span class="mono">#1b110d</span></li>
+      <li class="swatch"><span class="chip" style="background:#281c18"></span><b>card</b><span class="mono">#281c18</span></li>
+      <li class="swatch"><span class="chip" style="background:#f5f1ea"></span><b>foreground</b><span class="mono">#f5f1ea</span></li>
+      <li class="swatch"><span class="chip" style="background:#aea298"></span><b>muted-foreground</b><span class="mono">#aea298</span></li>
+      <li class="swatch"><span class="chip" style="background:#e67d58"></span><b>primary</b><span class="mono">#e67d58</span></li>
+      <li class="swatch"><span class="chip" style="background:#5cab83"></span><b>success</b><span class="mono">#5cab83</span></li>
+      <li class="swatch"><span class="chip" style="background:#e8b45e"></span><b>warm</b><span class="mono">#e8b45e</span></li>
+      <li class="swatch"><span class="chip" style="background:#e85854"></span><b>destructive</b><span class="mono">#e85854</span></li>
+    </ul>
+
+    <h3>What the contrast audit found</h3>
+    <p>
+      Light mode failed WCAG AA in three places, all on the accent. The fix was the lightest step
+      that clears 4.5:1 against both its own label and the page, so the hue survives — not a
+      wholesale repalette. Dark mode already passed and was left alone.
+    </p>
+    <div class="scroll">
+      <table>
+        <caption>Measured contrast ratios, light theme. Target 4.5:1 for normal text.</caption>
+        <thead>
+          <tr><th>Pair</th><th class="num">Before</th><th class="num">After</th><th>Verdict</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Label on primary button</td><td class="num">4.09</td><td class="num">4.73</td><td><span class="tag fail">was failing</span></td></tr>
+          <tr><td>Label on success</td><td class="num">3.66</td><td class="num">4.59</td><td><span class="tag fail">was failing</span></td></tr>
+          <tr><td>Primary as text or icon</td><td class="num">4.03</td><td class="num">4.66</td><td><span class="tag fail">was failing</span></td></tr>
+          <tr><td>Body text on background</td><td class="num">14.09</td><td class="num">14.09</td><td><span class="tag pass">already passing</span></td></tr>
+          <tr><td>Muted text on card</td><td class="num">5.31</td><td class="num">5.31</td><td><span class="tag pass">already passing</span></td></tr>
+          <tr><td>Label on warm badge</td><td class="num">8.07</td><td class="num">8.07</td><td><span class="tag pass">already passing</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="note">
+      <code>--ring</code> and <code>--sidebar-primary</code> held the old accent value and had to move
+      with it. Tokens carrying the same hue drift apart quietly; when one changes, grep for its
+      literal value rather than trusting the name.
+    </p>
+  </div>
+
+  <h2>Data visualisation</h2>
+  <div class="stack">
+    <p>
+      Five categorical hues, assigned in fixed order and never cycled. Two things about them are
+      deliberate and easy to get wrong.
+    </p>
+    <p>
+      <strong>Lightness is staggered, not uniform.</strong> Adjacent slots differ in L, because
+      lightness is what survives colour-vision deficiency — hue alone does not. A palette of five
+      equally-bright hues collapses into near-identical greys under deuteranopia.
+    </p>
+    <p>
+      <strong>Dark is re-stepped, not flipped.</strong> The warm hues take the low slots in dark mode
+      and the cool ones the high slots, because cyan cannot hold the chroma floor when it is dark.
+    </p>
+
+    <h3>Series — light</h3>
+    <ul class="series">
+      <li class="swatch"><span class="chip" style="background:#b94f2e"></span><b>1 · terracotta</b><span class="mono">#b94f2e</span></li>
+      <li class="swatch"><span class="chip" style="background:#00989f"></span><b>2 · teal</b><span class="mono">#00989f</span></li>
+      <li class="swatch"><span class="chip" style="background:#8d356c"></span><b>3 · plum</b><span class="mono">#8d356c</span></li>
+      <li class="swatch"><span class="chip" style="background:#ac860d"></span><b>4 · gold</b><span class="mono">#ac860d</span></li>
+      <li class="swatch"><span class="chip" style="background:#4c62b3"></span><b>5 · indigo</b><span class="mono">#4c62b3</span></li>
+    </ul>
+
+    <h3>Series — dark</h3>
+    <ul class="series">
+      <li class="swatch"><span class="chip" style="background:#b44e2e"></span><b>1 · terracotta</b><span class="mono">#b44e2e</span></li>
+      <li class="swatch"><span class="chip" style="background:#00a8af"></span><b>2 · teal</b><span class="mono">#00a8af</span></li>
+      <li class="swatch"><span class="chip" style="background:#a74983"></span><b>3 · plum</b><span class="mono">#a74983</span></li>
+      <li class="swatch"><span class="chip" style="background:#b28d21"></span><b>4 · gold</b><span class="mono">#b28d21</span></li>
+      <li class="swatch"><span class="chip" style="background:#5e77cd"></span><b>5 · indigo</b><span class="mono">#5e77cd</span></li>
+    </ul>
+
+    <div class="scroll">
+      <table>
+        <caption>Both palettes pass all six checks with no warnings.</caption>
+        <thead><tr><th>Check</th><th class="num">Light</th><th class="num">Dark</th></tr></thead>
+        <tbody>
+          <tr><td>Lightness band</td><td class="num">all in 0.43–0.77</td><td class="num">all in 0.48–0.67</td></tr>
+          <tr><td>Chroma floor (≥ 0.10)</td><td class="num">pass</td><td class="num">pass</td></tr>
+          <tr><td>Worst adjacent pair, CVD ΔE</td><td class="num">14.0</td><td class="num">11.3</td></tr>
+          <tr><td>Worst adjacent pair, normal vision</td><td class="num">25.5</td><td class="num">23.9</td></tr>
+          <tr><td>Contrast vs own surface</td><td class="num">all ≥ 3:1</td><td class="num">all ≥ 3:1</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="note">
+      The previous chart tokens were the shadcn defaults — a blue and a red that clashed with a warm
+      palette and had never been checked. Worse, <code>.dark</code> defined no chart tokens at all, so
+      every chart in dark mode silently used the light steps against the wrong ground.
+    </p>
+
+    <h3>Rules for charts</h3>
+    <ul class="stack-sm">
+      <li><strong>One series, one hue.</strong> Colour is an encoding. A ranked list of one kind of thing gets a single colour; cycling hues down it implies groups that don't exist, and repeats once the rows outnumber the hues.</li>
+      <li><strong>Never a second y-axis.</strong> Two measures of different scale become two charts.</li>
+      <li><strong>Gaps stay gaps.</strong> A missing value breaks the line; joining across it draws a trend nobody measured.</li>
+      <li><strong>No zero-height marks.</strong> An absent column and a measured zero must not look the same.</li>
+      <li><strong>Every chart has a table view</strong>, because colour alone is not an encoding.</li>
+      <li><strong>Direction never rests on colour.</strong> A delta carries an arrow and a sign as well as a hue.</li>
+      <li><strong>Text wears text tokens</strong>, never the series colour.</li>
+    </ul>
+  </div>
+
+  <h2>Typography</h2>
+  <div class="stack">
+    <p>
+      Fraunces for display, Plus Jakarta Sans for everything read in quantity. Fraunces carries an
+      optical-size axis, and it is now set per level — without it a 40px heading is drawn with the
+      letterforms of 14px body text, which is the entire reason to choose a variable serif.
+    </p>
+    <div class="card specimen">
+      <div><span class="label">display</span><span class="sp-display">100 days, your goals</span></div>
+      <div><span class="label">title</span><span class="sp-title">Consistency, week by week</span></div>
+      <div><span class="label">heading</span><span class="sp-heading">How each goal is going</span></div>
+      <div><span class="label">body</span><span class="sp-body">Small habits, 100 days, and the story you keep.</span></div>
+      <div><span class="label">small</span><span class="sp-small">Days you logged something, over the days that have happened.</span></div>
+      <div><span class="label">tiny</span><span class="sp-tiny">A dash means there is no honest denominator yet, not zero.</span></div>
+    </div>
+    <div class="scroll">
+      <table>
+        <caption>The scale is fluid between a phone and a laptop; ratio ≈ 1.25.</caption>
+        <thead><tr><th>Token</th><th>Clamp</th><th>Face</th><th class="num">opsz</th></tr></thead>
+        <tbody>
+          <tr><td><code>--text-display</code></td><td class="mono">2rem → 2.75rem</td><td>Fraunces</td><td class="num">96</td></tr>
+          <tr><td><code>--text-title</code></td><td class="mono">1.5rem → 1.875rem</td><td>Fraunces</td><td class="num">48</td></tr>
+          <tr><td><code>--text-heading</code></td><td class="mono">1.125rem → 1.25rem</td><td>Fraunces</td><td class="num">24</td></tr>
+          <tr><td><code>--text-body</code></td><td class="mono">1rem</td><td>Plus Jakarta Sans</td><td class="num">—</td></tr>
+          <tr><td><code>--text-small</code></td><td class="mono">0.875rem</td><td>Plus Jakarta Sans</td><td class="num">—</td></tr>
+          <tr><td><code>--text-tiny</code></td><td class="mono">0.75rem</td><td>Plus Jakarta Sans</td><td class="num">—</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="note">
+      Anything that updates in place — a streak counter, a percentage — takes the <code>numeric</code>
+      utility for tabular figures. Without it the digits change width as they update and the number
+      appears to twitch.
+    </p>
+  </div>
+
+  <h2>Motion and focus</h2>
+  <div class="stack">
+    <p>
+      Three animations exist: <code>pop</code> on a completed tap, <code>rise</code> on page entry,
+      <code>glow</code> on a milestone. All of them are now behind
+      <code>prefers-reduced-motion</code> — previously they ran regardless, in an app that pops
+      something on every single tap.
+    </p>
+    <p>
+      Focus had no styling outside the shadcn primitives, so it disappeared anywhere an outline was
+      reset. There is now a global <code>:focus-visible</code> ring on the accent. The app is operated
+      daily, often one-handed; the focus state is not decoration.
+    </p>
+  </div>
+
+  <h2>Components</h2>
+  <div class="stack">
+    <div class="scroll">
+      <table>
+        <thead><tr><th>Component</th><th>Where</th><th>What it must do</th></tr></thead>
+        <tbody>
+          <tr><td><code>surface</code></td><td>Utility class</td><td>Card ground, 1px border, soft shadow, <code>--radius-xl</code>. The default container for anything grouped.</td></tr>
+          <tr><td><code>eyebrow</code></td><td>Utility class</td><td>Uppercase label above a heading. Letter-spaced; muted; never a heading itself.</td></tr>
+          <tr><td>Goal card</td><td>Today, Calendar</td><td>Tap target ≥ 40px. Shows an amount field when the goal is quantified, never by a hardcoded list of which goals have numbers. States a partial log as progress, not completion.</td></tr>
+          <tr><td>Open-goal card</td><td>Today</td><td>No checkbox — an open goal is not a once-a-day thing. Each add accumulates.</td></tr>
+          <tr><td>Stat tile</td><td>Analytics</td><td>One number, its label, and its denominator. A delta carries an arrow and a sign.</td></tr>
+          <tr><td>Bar list</td><td>Analytics</td><td>Horizontal, so long labels stay readable. Monochrome unless the rows are genuinely different categories.</td></tr>
+          <tr><td>Chart frame</td><td>Analytics</td><td>Title, the denominator stated in the hint, and a data-table toggle.</td></tr>
+          <tr><td>Progress ring</td><td>Today, Summary</td><td>Day count against duration. Never a completion average.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <h2>Information architecture</h2>
+  <div class="stack">
+    <p>
+      Five primary destinations, which is the most a phone bottom bar holds before targets get too
+      narrow to hit. Everything else lives in the sidebar on desktop and is reached from context on
+      mobile.
+    </p>
+    <div class="ia">
+      <div class="card">
+        <p class="eyebrow">Primary</p>
+        <ol>
+          <li>Today</li>
+          <li>Calendar</li>
+          <li><span class="new">Memories</span> <span style="color:var(--muted)">— moved in</span></li>
+          <li><span class="new">Analytics</span> <span style="color:var(--muted)">— replaces Stats</span></li>
+          <li>Settings</li>
+        </ol>
+      </div>
+      <div class="card">
+        <p class="eyebrow">Secondary</p>
+        <ul>
+          <li>Your goals</li>
+          <li><span class="new">Money avoided</span> <span style="color:var(--muted)">— moved out</span></li>
+          <li>Weekly review</li>
+          <li>The whole story</li>
+        </ul>
+      </div>
+      <div class="card">
+        <p class="eyebrow">Removed</p>
+        <ul>
+          <li><span class="gone">Stats</span></li>
+        </ul>
+        <p style="font-size:.875rem;color:var(--ink-2);margin-top:.75rem">
+          Two screens of numbers is a defect, not a feature. Stats also carried its own copy of the
+          monthly-savings chart that Money already showed. <code>/stats</code> redirects rather than
+          404s — it was in the nav for months.
+        </p>
+      </div>
+    </div>
+    <p class="note">
+      Memories moved into the primary five because keeping one is a daily act in a product about a
+      hundred days of them. Money moved out: it was over-weighted as one of five now that spending is
+      one goal category among many, rather than one of exactly four habits.
+    </p>
+  </div>
+
+  <h2>Voice</h2>
+  <div class="stack">
+    <p>
+      The app talks to one person about their own life, so it uses second person and stays plain.
+      Wording that depends on whether a journey is solo or shared resolves through a single module —
+      never branched inline — because the alternative was a fifth duplicated list of labels.
+    </p>
+    <ul class="stack-sm">
+      <li><strong>Never imply a second person who isn't there.</strong> A solo journey is a complete thing, not a broken shared one. Earlier copy told solo users to "cheer on your partner".</li>
+      <li><strong>Say what happened, not what was attempted.</strong> If a template added three goals and skipped two you already had, the toast says so.</li>
+      <li><strong>An empty state offers the next action</strong>, not an apology.</li>
+      <li><strong>Encouragement is never a comparison.</strong> The other person appears in copy only when it's encouraging, never as a ranking.</li>
+    </ul>
+  </div>
+
+  <h2>Known gaps</h2>
+  <div class="stack">
+    <ul class="stack-sm">
+      <li><strong>No spacing scale.</strong> Screens still use Tailwind's defaults ad hoc; the type scale landed first because it was doing more visible damage.</li>
+      <li><strong>The mock backend ships to production.</strong> The data facade imports both backends unconditionally, so demo fixtures sit in the bundle — about 9 KB gzipped. Dead, not reachable, but shipped.</li>
+      <li><strong>No component gallery in-app.</strong> This page documents the system; nothing renders it live against the real components, so drift is possible.</li>
+      <li><strong>Warm has no dark-mode contrast partner defined for text-on-warm at small sizes</strong> — it passes today at 9.79:1, but that is luck rather than a stated rule.</li>
+    </ul>
+  </div>
+
+  <hr>
+  <p class="meta" style="border:none;padding-top:1.5rem">
+    Values in this document are the literal contents of <code>src/styles.css</code>. If a swatch and
+    the app disagree, the app is right and this page is stale.
+  </p>
+
+</div>

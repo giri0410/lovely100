@@ -95,7 +95,7 @@
   --warm-foreground: oklch(0.3 0.05 60);
   --border: oklch(0.9 0.018 78);
   --input: oklch(0.9 0.018 78);
-  --ring: oklch(0.6 0.148 38);
+  --ring: oklch(0.565 0.148 38);
   /* Categorical series, assigned in this fixed order and never cycled.
      Lightness is deliberately staggered rather than uniform: adjacent slots
      differ in L, which is what survives colour-vision deficiency — hue alone
@@ -110,12 +110,12 @@
   --chart-5: oklch(0.520 0.130 270);  /* indigo     */
   --sidebar: oklch(0.975 0.014 84);
   --sidebar-foreground: oklch(0.28 0.028 44);
-  --sidebar-primary: oklch(0.6 0.148 38);
+  --sidebar-primary: oklch(0.565 0.148 38);
   --sidebar-primary-foreground: oklch(0.99 0.008 84);
   --sidebar-accent: oklch(0.94 0.022 82);
   --sidebar-accent-foreground: oklch(0.3 0.03 44);
   --sidebar-border: oklch(0.9 0.018 78);
-  --sidebar-ring: oklch(0.6 0.148 38);
+  --sidebar-ring: oklch(0.565 0.148 38);
 }
 
 .dark {
