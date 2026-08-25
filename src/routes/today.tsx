@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Check, PartyPopper, Plus, Settings2, Sparkles } from "lucide-react";
+import { Camera, Check, PartyPopper, Plus, Settings2, Sparkles } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { ProgressRing } from "@/components/ProgressRing";
 import { useAddLogMutation, useGoalLogMutation } from "@/hooks/useChallenge";
@@ -206,6 +206,13 @@ function TodayPage() {
               </Link>
               {/* Mobile has no sidebar, so the review needs a way in from the
                   screen people actually open every day. */}
+              <Link
+                to="/memories"
+                className="flex items-center gap-2 rounded-xl border border-input px-4 py-2.5 text-sm"
+              >
+                <Camera className="size-4" />
+                Keep a memory
+              </Link>
               <Link
                 to="/review"
                 className="flex items-center gap-2 rounded-xl border border-input px-4 py-2.5 text-sm md:hidden"

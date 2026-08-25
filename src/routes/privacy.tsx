@@ -11,7 +11,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 // The address people can actually reach you on. Apple checks that contact
 // details work, so keep this current.
 const CONTACT_EMAIL = "girimanikandan.m@gmail.com";
-const LAST_UPDATED = "24 August 2026";
+const LAST_UPDATED = "25 August 2026";
 
 export const Route = createFileRoute("/privacy")({
   head: () => ({
@@ -19,7 +19,7 @@ export const Route = createFileRoute("/privacy")({
       { title: "Privacy Policy — Lovely 100" },
       {
         name: "description",
-        content: "What Lovely 100 collects, what your partner can see, and how to delete it all.",
+        content: "What Lovely 100 collects, what the person you share with can see, and how to delete it all.",
       },
     ],
   }),
@@ -37,7 +37,7 @@ function PrivacyPage() {
         <Section title="The short version">
           <p>
             This is a habit tracker for two people. It stores what you log so the app can show your progress,
-            and shares it with the partner you invite. There is no advertising, no analytics, no tracking, and
+            and shares it with anyone you invite. There is no advertising, no analytics, no tracking, and
             nothing is sold or shared for marketing. You can delete everything from inside the app at any time.
           </p>
         </Section>
@@ -47,12 +47,14 @@ function PrivacyPage() {
           <List
             items={[
               "Your email address and password, to sign you in. The password is hashed by our authentication provider — we never see it.",
-              "Your display name and the relationship label you choose.",
-              "Your daily habit entries: which of the four habits you completed, minutes walked, minutes studied and the topic, and any notes.",
+              "Your display name, and the relationship label if you choose to add one.",
+              "The goals you set: their names, how often you aim to do them, any target, and when they started.",
+              "Every time you log one: the date, any number you record against it, and any note.",
+              "Memories you keep: the text, the place, and any photos you attach.",
               "Avoided expenses you log: the amount, what it was for, and why you skipped it.",
               "Your weekly review notes.",
               "Your reminder preferences and times.",
-              "The challenge itself: its name, start date and invite code.",
+              "The journey itself: its name, start date, length and invite code.",
             ]}
           />
           <p>
@@ -61,22 +63,44 @@ function PrivacyPage() {
           </p>
         </Section>
 
-        <Section title="What your partner can see" tone="warm">
+        <Section title="What the other person can see" tone="warm">
           <p>
-            This is the part worth reading twice. When you join a challenge with someone, the two of you share
+            This is the part worth reading twice. When you share a journey with someone, the two of you share
             it — and they can see:
           </p>
           <List
             items={[
-              "Which habits you completed, on every day of the challenge.",
-              "Your walking minutes and your study minutes and topics.",
+              "Every goal in the journey, and which of them you completed on any day.",
+              "Any number you record against a goal — minutes, pages, steps — and any note attached to it.",
+              "Every memory you keep, including its text, its place and its photos.",
               "Every avoided expense you log, including the amount, the description and your reason.",
               "Your weekly review notes.",
             ]}
           />
           <p>
-            Treat anything you log as something you are telling your partner. Nobody outside your challenge can
-            see any of it — that is enforced by the database itself, not just by the app.
+            A goal you mark as just yours is still visible to them; what they cannot do is change or delete it.
+            Treat anything you log as something you are telling them.
+          </p>
+          <p>
+            Nobody else can see any of it. That is enforced by the database itself rather than by the app, and
+            it covers photos too — they live in private storage that only your own journey can read.
+          </p>
+        </Section>
+
+        <Section title="Sharing a recap" tone="warm">
+          <p>
+            The app can turn your progress into a card you can share. Two things are worth being exact about,
+            because this is the one place your journey can leave it:
+          </p>
+          <List
+            items={[
+              "The card is drawn on your device. It is never uploaded to us, and there is no link to it — no page on the internet shows your journey to anyone.",
+              "Once you share the image yourself, whoever you send it to can see what is on it: your day count, your streak, your goal names and how far you have got with each. That is your decision, and we cannot take it back for you.",
+            ]}
+          />
+          <p>
+            We deliberately do not have public profiles, feeds or shareable links. The only way anything leaves
+            your journey is if you send it somewhere yourself.
           </p>
         </Section>
 
@@ -111,11 +135,11 @@ function PrivacyPage() {
           <p>
             Open <span className="font-medium text-foreground">Settings</span> and choose{" "}
             <span className="font-medium text-foreground">Delete account</span>. That removes your login and
-            your side of the challenge — habits, avoided expenses, reviews and reminders — permanently and
+            your side of the journey — goals, logs, memories, photos, avoided expenses, reviews and reminders — permanently and
             straight away. It cannot be undone.
           </p>
           <p>
-            Your partner's own entries stay with them, because they are theirs. If you would rather we handled
+            The other person's own entries stay with them, because they are theirs. If you would rather we handled
             it, email{" "}
             <a href={`mailto:${CONTACT_EMAIL}`} className="text-primary underline-offset-4 hover:underline">
               {CONTACT_EMAIL}

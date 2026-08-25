@@ -50,4 +50,10 @@ export const deleteGoalLog = useMock ? mockApi.deleteGoalLog : realApi.deleteGoa
 export const addLog = useMock ? mockApi.addLog : realApi.addLog;
 export const deleteLog = useMock ? mockApi.deleteLog : realApi.deleteLog;
 
+/* memories & media (P6) */
+export const listMedia = useMock ? mockApi.listMedia : realApi.listMedia;
+export const signedUrlsFor = useMock ? mockApi.signedUrlsFor : realApi.signedUrlsFor;
+export const uploadMemoryPhoto = useMock ? mockApi.uploadMemoryPhoto : realApi.uploadMemoryPhoto;
+export const deleteMedia = useMock ? mockApi.deleteMedia : realApi.deleteMedia;
+
 export type AdminUserRow = mockApi.AdminUserRow;

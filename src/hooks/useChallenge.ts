@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import * as api from "@/data";
 import type { AvoidedExpense, Journey, DailyHabit, Member } from "@/lib/challenge";
-import type { Goal, Log } from "@/lib/goals";
+import type { Goal, Log, Media } from "@/lib/goals";
 
 export interface WeeklyReview {
   id: string;
@@ -291,5 +291,78 @@ export function useGoalMutations(journeyId: string | undefined) {
     }),
     archive: useMutation({ mutationFn: api.archiveGoal, onSuccess: invalidate }),
     applyTemplate: useMutation({ mutationFn: api.applyGoalTemplate, onSuccess: invalidate }),
+  };
+}
+
+/* ---------- memories & media (P6) ---------- */
+
+export function useMedia(journeyId: string | undefined) {
+  return useQuery({
+    queryKey: ["media", journeyId],
+    enabled: !!journeyId,
+    queryFn: () => api.listMedia(journeyId!),
+  });
+}
+
+/**
+ * Signed URLs for a set of storage paths.
+ *
+ * The bucket is private so these expire; the query is keyed on the sorted path
+ * list and refreshed well inside the hour the server grants, because a stale
+ * URL renders as a broken image rather than an error anyone can act on.
+ */
+export function useSignedUrls(paths: string[]) {
+  const key = [...paths].sort();
+  return useQuery({
+    queryKey: ["signed-urls", key],
+    enabled: paths.length > 0,
+    queryFn: () => api.signedUrlsFor(key),
+    staleTime: 45 * 60 * 1000,
+    gcTime: 60 * 60 * 1000,
+  });
+}
+
+export function useMemoryMutations(journeyId: string | undefined, memberId: string | undefined) {
+  const qc = useQueryClient();
+  const invalidate = () => {
+    qc.invalidateQueries({ queryKey: ["challenge", journeyId] });
+    qc.invalidateQueries({ queryKey: ["media", journeyId] });
+  };
+
+  return {
+    /** A memory is a log with no goal, optionally carrying a photo. */
+    add: useMutation({
+      mutationFn: async (input: { date: string; note: string | null; place: string | null; file?: File | null }) => {
+        const log = await api.addLog({
+          memberId: memberId!,
+          goalId: null,
+          date: input.date,
+          note: input.note,
+          place: input.place,
+        });
+        if (input.file) {
+          await api.uploadMemoryPhoto({ journeyId: journeyId!, logId: log.id, file: input.file });
+        }
+        return log;
+      },
+      onSuccess: invalidate,
+    }),
+
+    /** Attach a photo to a memory that already exists. */
+    attach: useMutation({
+      mutationFn: (input: { logId: string; file: File }) =>
+        api.uploadMemoryPhoto({ journeyId: journeyId!, logId: input.logId, file: input.file }),
+      onSuccess: invalidate,
+    }),
+
+    removePhoto: useMutation({
+      mutationFn: (media: Media) => api.deleteMedia(media),
+      onSuccess: invalidate,
+    }),
+
+    remove: useMutation({
+      mutationFn: (logId: string) => api.deleteLog(logId),
+      onSuccess: invalidate,
+    }),
   };
 }

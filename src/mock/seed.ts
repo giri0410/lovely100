@@ -6,7 +6,7 @@
  * ever talk to that module, never to this file directly.
  */
 import { addDays, toISO, type AvoidedExpense, type Journey, type DailyHabit, type Member } from "@/lib/challenge";
-import type { Goal, Log } from "@/lib/goals";
+import type { Goal, Log, Media } from "@/lib/goals";
 
 export interface MockWeeklyReview {
   id: string;
@@ -50,6 +50,9 @@ export interface MockDatabase {
   habits: DailyHabit[];
   goals: Goal[];
   logs: Log[];
+  media: Media[];
+  /** Photo bytes as data URLs — mock mode has no object store. */
+  mediaData?: Record<string, string>;
   expenses: AvoidedExpense[];
   reviews: MockWeeklyReview[];
   reminders: MockReminder[];
@@ -252,5 +255,5 @@ export function createSeedDatabase(): MockDatabase {
     });
   }
 
-  return { users, journeys: [journey], members, habits, goals, logs, expenses, reviews, reminders, sessionUserId: null };
+  return { users, journeys: [journey], members, habits, goals, logs, media: [], mediaData: {}, expenses, reviews, reminders, sessionUserId: null };
 }

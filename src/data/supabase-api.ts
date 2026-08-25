@@ -8,7 +8,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import type { AvoidedExpense, Journey, DailyHabit, Member } from "@/lib/challenge";
 import { todayISO } from "@/lib/challenge";
-import type { Cadence, Goal, GoalTemplate, Log, Metric } from "@/lib/goals";
+import type { Cadence, Goal, GoalTemplate, Log, Media, Metric } from "@/lib/goals";
 import { parseTemplateGoals } from "@/lib/goals";
 import type { JourneyKind } from "@/lib/copy";
 
@@ -570,5 +570,95 @@ export async function addLog(input: {
 
 export async function deleteLog(logId: string): Promise<void> {
   const { error } = await supabase.from("logs").delete().eq("id", logId);
+  if (error) throw new Error(error.message);
+}
+
+/* ---------- memories & media (P6) ---------- */
+
+const MEMORIES_BUCKET = "memories";
+
+/** Signed URLs expire; an hour outlives any page view without lingering. */
+const SIGNED_URL_TTL_SECONDS = 3600;
+
+export async function listMedia(journeyId: string): Promise<Media[]> {
+  // RLS scopes media through its log, so filtering by journey means joining.
+  const { data, error } = await supabase
+    .from("media")
+    .select("*, logs!inner(journey_id)")
+    .eq("logs.journey_id", journeyId)
+    .order("created_at", { ascending: false });
+  if (error) throw new Error(error.message);
+  return (data ?? []).map(({ logs: _logs, ...m }) => m) as Media[];
+}
+
+/**
+ * Short-lived URLs for a batch of storage paths.
+ *
+ * The bucket is private, so there is no stable URL to cache — every render
+ * asks for fresh ones. Paths that fail resolve to null rather than throwing,
+ * because one missing object should not blank the whole feed.
+ */
+export async function signedUrlsFor(paths: string[]): Promise<Record<string, string | null>> {
+  if (paths.length === 0) return {};
+  const { data, error } = await supabase.storage
+    .from(MEMORIES_BUCKET)
+    .createSignedUrls(paths, SIGNED_URL_TTL_SECONDS);
+  if (error) throw new Error(error.message);
+  const out: Record<string, string | null> = {};
+  for (const row of data ?? []) {
+    if (row.path) out[row.path] = row.signedUrl ?? null;
+  }
+  return out;
+}
+
+/**
+ * Attach a photo to a log.
+ *
+ * The path is `{journey_id}/{log_id}/{random}.{ext}`. The leading journey id is
+ * not decoration: storage RLS decides access from that first segment alone, so
+ * a client cannot write outside its own journey however it names the rest.
+ */
+export async function uploadMemoryPhoto(input: {
+  journeyId: string;
+  logId: string;
+  file: File;
+}): Promise<Media> {
+  const ext = (input.file.name.split(".").pop() ?? "jpg").toLowerCase().replace(/[^a-z0-9]/g, "");
+  const path = `${input.journeyId}/${input.logId}/${crypto.randomUUID()}.${ext || "jpg"}`;
+
+  const { error: upErr } = await supabase.storage
+    .from(MEMORIES_BUCKET)
+    .upload(path, input.file, { contentType: input.file.type, upsert: false });
+  if (upErr) throw new Error(upErr.message);
+
+  const { data, error } = await supabase
+    .from("media")
+    .insert({
+      log_id: input.logId,
+      storage_path: path,
+      mime: input.file.type || null,
+      bytes: input.file.size,
+    })
+    .select()
+    .single();
+
+  if (error) {
+    // The row is what makes the object findable. Without it the upload is an
+    // orphan nobody can reach or delete, so undo it rather than leave litter.
+    await supabase.storage.from(MEMORIES_BUCKET).remove([path]);
+    throw new Error(error.message);
+  }
+  return data as Media;
+}
+
+export async function deleteMedia(media: Media): Promise<void> {
+  // Object first: if this fails the row stays and the delete can be retried.
+  // The other order would leave an unreachable object behind.
+  const { error: rmErr } = await supabase.storage
+    .from(MEMORIES_BUCKET)
+    .remove([media.storage_path]);
+  if (rmErr) throw new Error(rmErr.message);
+
+  const { error } = await supabase.from("media").delete().eq("id", media.id);
   if (error) throw new Error(error.message);
 }

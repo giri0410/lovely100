@@ -1,6 +1,6 @@
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useEffect, type ReactNode } from "react";
-import { CalendarDays, Home, NotebookPen, PiggyBank, Settings, Sparkles, Target, TrendingUp } from "lucide-react";
+import { CalendarDays, Camera, Home, NotebookPen, PiggyBank, Settings, Sparkles, Target, TrendingUp } from "lucide-react";
 import { useChallengeData, useMyMember, useSession } from "@/hooks/useChallenge";
 import { buildProgress, type JourneyProgress } from "@/lib/progress";
 import { copy, type Copy } from "@/lib/copy";
@@ -24,6 +24,7 @@ const NAV = [
  */
 const SECONDARY_NAV = [
   { to: "/goals", label: "Your goals", icon: Target },
+  { to: "/memories", label: "Memories", icon: Camera },
   { to: "/review", label: "Weekly review", icon: NotebookPen },
   { to: "/summary", label: "The whole story", icon: Sparkles },
 ] as const;

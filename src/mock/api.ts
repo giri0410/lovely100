@@ -10,7 +10,7 @@
  */
 import type { AvoidedExpense, Journey, DailyHabit, Member } from "@/lib/challenge";
 import { todayISO } from "@/lib/challenge";
-import type { Cadence, Goal, GoalTemplate, Log, Metric } from "@/lib/goals";
+import type { Cadence, Goal, GoalTemplate, Log, Media, Metric } from "@/lib/goals";
 import type { JourneyKind } from "@/lib/copy";
 import {
   createSeedDatabase,
@@ -765,6 +765,72 @@ export async function addLog(input: {
 export async function deleteLog(logId: string): Promise<void> {
   hydrate();
   db.logs = db.logs.filter((l) => l.id !== logId);
+  persist();
+  return delay(undefined);
+}
+
+/* ---------- memories & media (P6) ---------- */
+
+export async function listMedia(journeyId: string): Promise<Media[]> {
+  hydrate();
+  const logIds = new Set(db.logs.filter((l) => l.journey_id === journeyId).map((l) => l.id));
+  return delay(
+    clone(
+      db.media
+        .filter((m) => logIds.has(m.log_id))
+        .sort((a, b) => b.created_at.localeCompare(a.created_at)),
+    ),
+  );
+}
+
+/**
+ * Mock mode has no object store, so photos become data URLs held in the mock
+ * database. That keeps the feed genuinely renderable offline; what it does not
+ * rehearse is storage RLS, which only exists on the real backend.
+ */
+export async function signedUrlsFor(paths: string[]): Promise<Record<string, string | null>> {
+  hydrate();
+  const out: Record<string, string | null> = {};
+  for (const p of paths) out[p] = db.mediaData?.[p] ?? null;
+  return delay(out);
+}
+
+export async function uploadMemoryPhoto(input: {
+  journeyId: string;
+  logId: string;
+  file: File;
+}): Promise<Media> {
+  hydrate();
+  const ext = (input.file.name.split(".").pop() ?? "jpg").toLowerCase();
+  const path = `${input.journeyId}/${input.logId}/${crypto.randomUUID()}.${ext}`;
+
+  const dataUrl = await new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result));
+    reader.onerror = () => reject(new Error("Could not read that file"));
+    reader.readAsDataURL(input.file);
+  });
+
+  const media: Media = {
+    id: `media-${crypto.randomUUID()}`,
+    log_id: input.logId,
+    storage_path: path,
+    mime: input.file.type || null,
+    width: null,
+    height: null,
+    bytes: input.file.size,
+    created_at: new Date().toISOString(),
+  };
+  db.media.push(media);
+  db.mediaData = { ...(db.mediaData ?? {}), [path]: dataUrl };
+  persist();
+  return delay(clone(media));
+}
+
+export async function deleteMedia(media: Media): Promise<void> {
+  hydrate();
+  db.media = db.media.filter((m) => m.id !== media.id);
+  if (db.mediaData) delete db.mediaData[media.storage_path];
   persist();
   return delay(undefined);
 }

@@ -195,3 +195,20 @@ export function parseTemplateGoals(raw: unknown): TemplateGoal[] {
   }
   return out;
 }
+
+/* ---------- media ---------- */
+
+export interface Media {
+  id: string;
+  log_id: string;
+  /**
+   * `{journey_id}/{log_id}/{random}.{ext}`. The leading journey id is the
+   * security boundary — storage RLS decides access from that segment alone.
+   */
+  storage_path: string;
+  mime: string | null;
+  width: number | null;
+  height: number | null;
+  bytes: number | null;
+  created_at: string;
+}

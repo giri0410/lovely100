@@ -14,9 +14,11 @@ import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as CalendarRouteImport } from './routes/calendar'
 import { Route as GoalsRouteImport } from './routes/goals'
+import { Route as MemoriesRouteImport } from './routes/memories'
 import { Route as MoneyRouteImport } from './routes/money'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as PrivacyRouteImport } from './routes/privacy'
+import { Route as RecapRouteImport } from './routes/recap'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as ReviewRouteImport } from './routes/review'
 import { Route as SettingsRouteImport } from './routes/settings'
@@ -49,6 +51,11 @@ const GoalsRoute = GoalsRouteImport.update({
   path: '/goals',
   getParentRoute: () => rootRouteImport,
 } as any)
+const MemoriesRoute = MemoriesRouteImport.update({
+  id: '/memories',
+  path: '/memories',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const MoneyRoute = MoneyRouteImport.update({
   id: '/money',
   path: '/money',
@@ -62,6 +69,11 @@ const OnboardingRoute = OnboardingRouteImport.update({
 const PrivacyRoute = PrivacyRouteImport.update({
   id: '/privacy',
   path: '/privacy',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RecapRoute = RecapRouteImport.update({
+  id: '/recap',
+  path: '/recap',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
@@ -101,9 +113,11 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/calendar': typeof CalendarRoute
   '/goals': typeof GoalsRoute
+  '/memories': typeof MemoriesRoute
   '/money': typeof MoneyRoute
   '/onboarding': typeof OnboardingRoute
   '/privacy': typeof PrivacyRoute
+  '/recap': typeof RecapRoute
   '/reset-password': typeof ResetPasswordRoute
   '/review': typeof ReviewRoute
   '/settings': typeof SettingsRoute
@@ -117,9 +131,11 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/calendar': typeof CalendarRoute
   '/goals': typeof GoalsRoute
+  '/memories': typeof MemoriesRoute
   '/money': typeof MoneyRoute
   '/onboarding': typeof OnboardingRoute
   '/privacy': typeof PrivacyRoute
+  '/recap': typeof RecapRoute
   '/reset-password': typeof ResetPasswordRoute
   '/review': typeof ReviewRoute
   '/settings': typeof SettingsRoute
@@ -134,9 +150,11 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/calendar': typeof CalendarRoute
   '/goals': typeof GoalsRoute
+  '/memories': typeof MemoriesRoute
   '/money': typeof MoneyRoute
   '/onboarding': typeof OnboardingRoute
   '/privacy': typeof PrivacyRoute
+  '/recap': typeof RecapRoute
   '/reset-password': typeof ResetPasswordRoute
   '/review': typeof ReviewRoute
   '/settings': typeof SettingsRoute
@@ -152,9 +170,11 @@ export interface FileRouteTypes {
     | '/auth'
     | '/calendar'
     | '/goals'
+    | '/memories'
     | '/money'
     | '/onboarding'
     | '/privacy'
+    | '/recap'
     | '/reset-password'
     | '/review'
     | '/settings'
@@ -168,9 +188,11 @@ export interface FileRouteTypes {
     | '/auth'
     | '/calendar'
     | '/goals'
+    | '/memories'
     | '/money'
     | '/onboarding'
     | '/privacy'
+    | '/recap'
     | '/reset-password'
     | '/review'
     | '/settings'
@@ -184,9 +206,11 @@ export interface FileRouteTypes {
     | '/auth'
     | '/calendar'
     | '/goals'
+    | '/memories'
     | '/money'
     | '/onboarding'
     | '/privacy'
+    | '/recap'
     | '/reset-password'
     | '/review'
     | '/settings'
@@ -201,9 +225,11 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   CalendarRoute: typeof CalendarRoute
   GoalsRoute: typeof GoalsRoute
+  MemoriesRoute: typeof MemoriesRoute
   MoneyRoute: typeof MoneyRoute
   OnboardingRoute: typeof OnboardingRoute
   PrivacyRoute: typeof PrivacyRoute
+  RecapRoute: typeof RecapRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   ReviewRoute: typeof ReviewRoute
   SettingsRoute: typeof SettingsRoute
@@ -249,6 +275,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof GoalsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/memories': {
+      id: '/memories'
+      path: '/memories'
+      fullPath: '/memories'
+      preLoaderRoute: typeof MemoriesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/money': {
       id: '/money'
       path: '/money'
@@ -268,6 +301,13 @@ declare module '@tanstack/react-router' {
       path: '/privacy'
       fullPath: '/privacy'
       preLoaderRoute: typeof PrivacyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/recap': {
+      id: '/recap'
+      path: '/recap'
+      fullPath: '/recap'
+      preLoaderRoute: typeof RecapRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/reset-password': {
@@ -321,9 +361,11 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   CalendarRoute: CalendarRoute,
   GoalsRoute: GoalsRoute,
+  MemoriesRoute: MemoriesRoute,
   MoneyRoute: MoneyRoute,
   OnboardingRoute: OnboardingRoute,
   PrivacyRoute: PrivacyRoute,
+  RecapRoute: RecapRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   ReviewRoute: ReviewRoute,
   SettingsRoute: SettingsRoute,
