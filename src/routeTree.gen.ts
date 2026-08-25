@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as CalendarRouteImport } from './routes/calendar'
+import { Route as GoalsRouteImport } from './routes/goals'
 import { Route as MoneyRouteImport } from './routes/money'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as PrivacyRouteImport } from './routes/privacy'
@@ -41,6 +42,11 @@ const AuthRoute = AuthRouteImport.update({
 const CalendarRoute = CalendarRouteImport.update({
   id: '/calendar',
   path: '/calendar',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GoalsRoute = GoalsRouteImport.update({
+  id: '/goals',
+  path: '/goals',
   getParentRoute: () => rootRouteImport,
 } as any)
 const MoneyRoute = MoneyRouteImport.update({
@@ -94,6 +100,7 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AdminRoute
   '/auth': typeof AuthRoute
   '/calendar': typeof CalendarRoute
+  '/goals': typeof GoalsRoute
   '/money': typeof MoneyRoute
   '/onboarding': typeof OnboardingRoute
   '/privacy': typeof PrivacyRoute
@@ -109,6 +116,7 @@ export interface FileRoutesByTo {
   '/admin': typeof AdminRoute
   '/auth': typeof AuthRoute
   '/calendar': typeof CalendarRoute
+  '/goals': typeof GoalsRoute
   '/money': typeof MoneyRoute
   '/onboarding': typeof OnboardingRoute
   '/privacy': typeof PrivacyRoute
@@ -125,6 +133,7 @@ export interface FileRoutesById {
   '/admin': typeof AdminRoute
   '/auth': typeof AuthRoute
   '/calendar': typeof CalendarRoute
+  '/goals': typeof GoalsRoute
   '/money': typeof MoneyRoute
   '/onboarding': typeof OnboardingRoute
   '/privacy': typeof PrivacyRoute
@@ -142,6 +151,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/auth'
     | '/calendar'
+    | '/goals'
     | '/money'
     | '/onboarding'
     | '/privacy'
@@ -157,6 +167,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/auth'
     | '/calendar'
+    | '/goals'
     | '/money'
     | '/onboarding'
     | '/privacy'
@@ -172,6 +183,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/auth'
     | '/calendar'
+    | '/goals'
     | '/money'
     | '/onboarding'
     | '/privacy'
@@ -188,6 +200,7 @@ export interface RootRouteChildren {
   AdminRoute: typeof AdminRoute
   AuthRoute: typeof AuthRoute
   CalendarRoute: typeof CalendarRoute
+  GoalsRoute: typeof GoalsRoute
   MoneyRoute: typeof MoneyRoute
   OnboardingRoute: typeof OnboardingRoute
   PrivacyRoute: typeof PrivacyRoute
@@ -227,6 +240,13 @@ declare module '@tanstack/react-router' {
       path: '/calendar'
       fullPath: '/calendar'
       preLoaderRoute: typeof CalendarRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/goals': {
+      id: '/goals'
+      path: '/goals'
+      fullPath: '/goals'
+      preLoaderRoute: typeof GoalsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/money': {
@@ -300,6 +320,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdminRoute: AdminRoute,
   AuthRoute: AuthRoute,
   CalendarRoute: CalendarRoute,
+  GoalsRoute: GoalsRoute,
   MoneyRoute: MoneyRoute,
   OnboardingRoute: OnboardingRoute,
   PrivacyRoute: PrivacyRoute,

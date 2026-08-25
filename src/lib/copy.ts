@@ -48,6 +48,13 @@ export function copy(ctx: CopyContext) {
      * score" that is really just one person's own completion.
      */
     scoreLabel: together ? "Together score" : "Your consistency",
+
+    /**
+     * The headline number on Today: days showed up, not an average of
+     * completion percentages. "Days together" only claims togetherness when
+     * there genuinely is someone else.
+     */
+    showUpLabel: together ? "Days you both showed up" : "Days you showed up",
     scoreRingSublabel: together ? "Together score" : "Consistency",
 
     /** Streak framing. */

@@ -163,7 +163,7 @@ function pct(done: number, target: number): number {
 }
 
 /** A goal counts on a date once it has started and before it was archived. */
-function goalActiveOn(goal: Goal, iso: string): boolean {
+export function goalActiveOn(goal: Goal, iso: string): boolean {
   if (goal.starts_on > iso) return false;
   if (goal.archived_at && goal.archived_at.slice(0, 10) <= iso) return false;
   return true;

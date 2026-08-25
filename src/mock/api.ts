@@ -235,6 +235,8 @@ export interface MockChallengeData {
   habits: DailyHabit[];
   expenses: AvoidedExpense[];
   reviews: MockWeeklyReview[];
+  goals: Goal[];
+  logs: Log[];
 }
 
 export async function getChallengeData(journeyId: string): Promise<MockChallengeData> {
@@ -251,6 +253,10 @@ export async function getChallengeData(journeyId: string): Promise<MockChallenge
         .filter((e) => memberIds.includes(e.member_id))
         .sort((a, b) => b.date.localeCompare(a.date)),
       reviews: db.reviews.filter((r) => r.journey_id === journeyId),
+      goals: db.goals
+        .filter((g) => g.journey_id === journeyId)
+        .sort((a, b) => a.sort_order - b.sort_order),
+      logs: db.logs.filter((l) => l.journey_id === journeyId).sort((a, b) => a.date.localeCompare(b.date)),
     }),
   );
 }

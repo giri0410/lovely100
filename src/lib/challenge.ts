@@ -1,28 +1,5 @@
 import type { JourneyKind } from "./copy";
 
-export type HabitKey = "walk" | "food" | "spending" | "certification";
-
-export interface HabitDef {
-  key: HabitKey;
-  label: string;
-  hint: string;
-  column: "walk_completed" | "healthy_food_completed" | "unnecessary_spending_completed" | "certification_completed";
-  emoji: string;
-}
-
-export const HABITS: HabitDef[] = [
-  { key: "walk", label: "Morning Walk", hint: "30 minutes", column: "walk_completed", emoji: "🚶" },
-  { key: "food", label: "Healthy Food", hint: "Follow today's diet", column: "healthy_food_completed", emoji: "🥗" },
-  {
-    key: "spending",
-    label: "No Unnecessary Spending",
-    hint: "Avoid unnecessary purchases",
-    column: "unnecessary_spending_completed",
-    emoji: "💸",
-  },
-  { key: "certification", label: "Certification", hint: "30+ minutes", column: "certification_completed", emoji: "📘" },
-];
-
 export interface DailyHabit {
   id: string;
   journey_id: string;
@@ -104,10 +81,6 @@ export function dateForDay(startDate: string, day: number): string {
   return addDays(startDate, day - 1);
 }
 
-export function isSunday(iso: string): boolean {
-  return parseISO(iso).getDay() === 0;
-}
-
 export function formatLongDate(iso: string): string {
   return parseISO(iso).toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" });
 }
@@ -135,16 +108,21 @@ export function formatMinutes(minutes: number): string {
 
 /* ---------- computations ---------- */
 
-export function completedCount(entry?: DailyHabit | null): number {
-  if (!entry) return 0;
-  return HABITS.reduce((sum, h) => sum + (entry[h.column] ? 1 : 0), 0);
-}
-
 export type DayStatus = "completed" | "partial" | "missed" | "today" | "future";
 
-export function dayStatus(count: number, iso: string, today: string): DayStatus {
+/**
+ * `total` is how many goals were actually active that day, not a constant. It
+ * used to be hardcoded to 4, which silently broke the moment goals stopped
+ * being the same four every day.
+ *
+ * A day with no active goals is "future" regardless of its date — there was
+ * nothing to do, so calling it missed would blame the user for a day their
+ * goals had not started yet.
+ */
+export function dayStatus(count: number, total: number, iso: string, today: string): DayStatus {
   if (iso > today) return "future";
-  if (count === 4) return "completed";
+  if (total <= 0) return "future";
+  if (count >= total) return "completed";
   if (count > 0) return "partial";
   // An empty today is still ahead of you, not missed.
   if (iso === today) return "today";
@@ -189,9 +167,27 @@ export function computeStreak(keys: string[], done: (key: string) => boolean, cu
 
 export const MILESTONES = [7, 14, 30, 50, 75, 100];
 
-export function encouragement(bothDone: boolean, myCount: number, day: number): string {
-  if (bothDone) return "Great job! Both of you completed today. 💛";
-  if (myCount === 4) return "You're done for today — cheer on your partner.";
-  if (myCount > 0) return "You're building this habit together.";
+/**
+ * Kind-aware, and never mentions a second person unless there is one. The old
+ * version told a solo user to "cheer on your partner".
+ *
+ * `total` is the day's active goal count, so "done for today" means done with
+ * what was actually set — not with four things.
+ */
+export function encouragement(input: {
+  myCount: number;
+  total: number;
+  day: number;
+  /** True only when there is genuinely more than one member. */
+  together: boolean;
+  /** Whether every member finished the day. Ignored when not together. */
+  allDone?: boolean;
+}): string {
+  const { myCount, total, day, together, allDone } = input;
+  const done = total > 0 && myCount >= total;
+
+  if (together && allDone) return "Great job! You both completed today. 💛";
+  if (done) return together ? "You're done for today — cheer them on." : "You're done for today. 💛";
+  if (myCount > 0) return together ? "You're building this together." : "Good start — keep going.";
   return `Day ${day}. One small step is enough to start.`;
 }

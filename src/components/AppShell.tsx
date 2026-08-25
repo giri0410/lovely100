@@ -1,8 +1,9 @@
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useEffect, type ReactNode } from "react";
-import { CalendarDays, Home, NotebookPen, PiggyBank, Settings, Sparkles, TrendingUp } from "lucide-react";
+import { CalendarDays, Home, NotebookPen, PiggyBank, Settings, Sparkles, Target, TrendingUp } from "lucide-react";
 import { useChallengeData, useMyMember, useSession } from "@/hooks/useChallenge";
-import { buildStats, type JourneyStats } from "@/lib/stats";
+import { buildProgress, type JourneyProgress } from "@/lib/progress";
+import { copy, type Copy } from "@/lib/copy";
 import type { ChallengeData } from "@/hooks/useChallenge";
 import type { Member } from "@/lib/challenge";
 import { cn } from "@/lib/utils";
@@ -22,6 +23,7 @@ const NAV = [
  * reached from the Today and Stats pages instead.
  */
 const SECONDARY_NAV = [
+  { to: "/goals", label: "Your goals", icon: Target },
   { to: "/review", label: "Weekly review", icon: NotebookPen },
   { to: "/summary", label: "The whole story", icon: Sparkles },
 ] as const;
@@ -29,8 +31,16 @@ const SECONDARY_NAV = [
 export interface AppContext {
   me: Member;
   data: ChallengeData;
-  stats: JourneyStats;
+  progress: JourneyProgress;
+  /** Solo/shared wording, resolved once here so no screen branches inline. */
+  t: Copy;
+  /**
+   * The other member, when there is one. Named `partner` historically; it is
+   * simply "somebody else in this journey" and is undefined for solo.
+   */
   partner: Member | undefined;
+  /** This member's own progress — the common case for every screen. */
+  mine: JourneyProgress["members"][number] | undefined;
 }
 
 export function AppShell({ children }: { children: (ctx: AppContext) => ReactNode }) {
@@ -75,12 +85,14 @@ export function AppShell({ children }: { children: (ctx: AppContext) => ReactNod
     );
   } else if (meQuery.data && dataQuery.data) {
     const data = dataQuery.data;
-    const stats = buildStats(data.journey, data.members, data.habits, data.expenses);
+    const progress = buildProgress(data.journey, data.members, data.goals, data.logs);
     body = children({
       me: meQuery.data,
       data,
-      stats,
+      progress,
+      t: copy({ kind: data.journey.kind, memberCount: data.members.length }),
       partner: data.members.find((p) => p.id !== meQuery.data!.id),
+      mine: progress.members.find((m) => m.member.id === meQuery.data!.id),
     });
   } else {
     body = <div className="p-10 text-center text-sm text-muted-foreground">Setting things up…</div>;

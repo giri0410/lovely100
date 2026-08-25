@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { AppShell, PageHeader } from "@/components/AppShell";
 import * as api from "@/data";
 import { formatMoney, formatShortDate, todayISO } from "@/lib/challenge";
-import { monthlySavings } from "@/lib/stats";
+import { monthlySavings } from "@/lib/money";
 
 export const Route = createFileRoute("/money")({
   ssr: false,
@@ -25,7 +25,15 @@ export const Route = createFileRoute("/money")({
 function MoneyPage() {
   return (
     <AppShell>
-      {({ me, data, stats }) => <MoneyView me={me.id} journeyId={data.journey.id} expenses={data.expenses} members={data.members} total={stats.totalSaved} />}
+      {({ me, data }) => (
+        <MoneyView
+          me={me.id}
+          journeyId={data.journey.id}
+          expenses={data.expenses}
+          members={data.members}
+          total={data.expenses.reduce((sum, e) => sum + Number(e.amount || 0), 0)}
+        />
+      )}
     </AppShell>
   );
 }

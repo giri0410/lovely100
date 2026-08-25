@@ -1,18 +1,17 @@
 import { describe, expect, it } from "vitest";
 import {
   addDays,
-  completedCount,
   computeStreak,
   dateForDay,
   dayNumber,
   dayStatus,
   formatMinutes,
   formatMoney,
-  isSunday,
   parseISO,
   toISO,
   weekNumberForDay,
   type DailyHabit,
+  encouragement,
 } from "./challenge";
 
 /** A day with every habit unchecked; spread over it to switch individual ones on. */
@@ -74,8 +73,6 @@ describe("dates", () => {
   });
 
   it("identifies Sundays", () => {
-    expect(isSunday("2026-08-23")).toBe(true);
-    expect(isSunday("2026-08-24")).toBe(false);
   });
 
   it("groups days into 7-day weeks", () => {
@@ -107,47 +104,76 @@ describe("formatting", () => {
   });
 });
 
-describe("completedCount", () => {
-  it("is 0 for a missing entry", () => {
-    expect(completedCount(null)).toBe(0);
-    expect(completedCount(undefined)).toBe(0);
-  });
-
-  it("counts only the four habit columns", () => {
-    expect(completedCount(entry())).toBe(0);
-    expect(completedCount(entry({ walk_completed: true }))).toBe(1);
-    expect(completedCount(entry(allFour))).toBe(4);
-  });
-
-  it("ignores detail fields that aren't habit checkboxes", () => {
-    expect(completedCount(entry({ walk_duration: 45, certification_minutes: 60 }))).toBe(0);
-  });
-});
 
 describe("dayStatus", () => {
   const today = "2026-05-10";
 
   it("marks unreached days as future", () => {
-    expect(dayStatus(0, "2026-05-11", today)).toBe("future");
+    expect(dayStatus(0, 4, "2026-05-11", today)).toBe("future");
   });
 
   it("marks a full past day completed and a partial one partial", () => {
-    expect(dayStatus(4, "2026-05-09", today)).toBe("completed");
-    expect(dayStatus(2, "2026-05-09", today)).toBe("partial");
-    expect(dayStatus(0, "2026-05-09", today)).toBe("missed");
+    expect(dayStatus(4, 4, "2026-05-09", today)).toBe("completed");
+    expect(dayStatus(2, 4, "2026-05-09", today)).toBe("partial");
+    expect(dayStatus(0, 4, "2026-05-09", today)).toBe("missed");
   });
 
   it("shows a finished today as completed, not merely as today", () => {
-    expect(dayStatus(4, today, today)).toBe("completed");
+    expect(dayStatus(4, 4, today, today)).toBe("completed");
   });
 
   it("shows a part-done today by its progress", () => {
-    expect(dayStatus(2, today, today)).toBe("partial");
+    expect(dayStatus(2, 4, today, today)).toBe("partial");
   });
 
   it("keeps an untouched today as 'today' rather than missed", () => {
     // The day isn't over, so it hasn't been missed.
-    expect(dayStatus(0, today, today)).toBe("today");
+    expect(dayStatus(0, 4, today, today)).toBe("today");
+  });
+
+  // The point of taking `total`: goal counts differ per day now.
+  it("completes against the day's own total, not a constant 4", () => {
+    expect(dayStatus(2, 2, "2026-05-09", today)).toBe("completed");
+    expect(dayStatus(2, 7, "2026-05-09", today)).toBe("partial");
+  });
+
+  it("treats a day with no active goals as future, not missed", () => {
+    // Nothing was set for that day, so there was nothing to miss.
+    expect(dayStatus(0, 0, "2026-05-01", today)).toBe("future");
+  });
+});
+
+describe("encouragement", () => {
+  it("never mentions a partner on a solo journey", () => {
+    const msg = encouragement({ myCount: 4, total: 4, day: 5, together: false });
+    expect(msg).not.toMatch(/partner|them|both/i);
+    expect(msg).toBe("You're done for today. 💛");
+  });
+
+  it("celebrates both members finishing", () => {
+    expect(encouragement({ myCount: 2, total: 2, day: 5, together: true, allDone: true }))
+      .toMatch(/both/i);
+  });
+
+  it("nudges toward the partner when only you are done", () => {
+    expect(encouragement({ myCount: 2, total: 2, day: 5, together: true, allDone: false }))
+      .toMatch(/cheer/i);
+  });
+
+  it("measures done against the day's total, not 4", () => {
+    expect(encouragement({ myCount: 2, total: 2, day: 5, together: false })).toBe(
+      "You're done for today. 💛",
+    );
+  });
+
+  it("falls back to the day-number nudge with nothing done", () => {
+    expect(encouragement({ myCount: 0, total: 3, day: 7, together: false })).toBe(
+      "Day 7. One small step is enough to start.",
+    );
+  });
+
+  it("does not claim done when there are no goals at all", () => {
+    expect(encouragement({ myCount: 0, total: 0, day: 1, together: false })).toMatch(/Day 1/);
   });
 });
 

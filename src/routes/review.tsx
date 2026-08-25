@@ -4,9 +4,9 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { AppShell, PageHeader } from "@/components/AppShell";
 import * as api from "@/data";
-import { formatMinutes, formatMoney, weekNumberForDay } from "@/lib/challenge";
-import { buildWeekStats, isWeekComplete } from "@/lib/stats";
-import { copy } from "@/lib/copy";
+import { weekNumberForDay } from "@/lib/challenge";
+import { goalActiveOn } from "@/lib/progress";
+import { logMeetsTarget } from "@/lib/goals";
 
 export const Route = createFileRoute("/review")({
   ssr: false,
@@ -26,9 +26,18 @@ export const Route = createFileRoute("/review")({
 function ReviewPage() {
   return (
     <AppShell>
-      {({ me, data, stats }) => {
-        const currentWeek = weekNumberForDay(stats.currentDay);
-        return <ReviewView me={me.id} journeyId={data.journey.id} stats={stats} data={data} initialWeek={currentWeek} />;
+      {({ me, data, progress, t }) => {
+        const currentWeek = weekNumberForDay(progress.currentDay);
+        return (
+          <ReviewView
+            me={me.id}
+            journeyId={data.journey.id}
+            progress={progress}
+            t={t}
+            data={data}
+            initialWeek={currentWeek}
+          />
+        );
       }}
     </AppShell>
   );
@@ -37,13 +46,15 @@ function ReviewPage() {
 function ReviewView({
   me,
   journeyId,
-  stats,
+  progress,
+  t,
   data,
   initialWeek,
 }: {
   me: string;
   journeyId: string;
-  stats: ReturnType<typeof import("@/lib/stats").buildStats>;
+  progress: import("@/lib/progress").JourneyProgress;
+  t: import("@/lib/copy").Copy;
   data: import("@/hooks/useChallenge").ChallengeData;
   initialWeek: number;
 }) {
@@ -52,12 +63,38 @@ function ReviewView({
   const weeks = Array.from({ length: Math.ceil(data.journey.duration / 7) }, (_, i) => i + 1).filter(
     (w) => w <= initialWeek,
   );
-  const weekDates = stats.dates.slice((week - 1) * 7, week * 7).filter((d) => d <= stats.today);
+  const weekDates = progress.dates.slice((week - 1) * 7, week * 7).filter((d) => d <= progress.today);
 
-  const mine = stats.perMember.find((p) => p.member.id === me);
-  const t = copy({ kind: data.journey.kind, memberCount: stats.perMember.length });
-  const summary = buildWeekStats(mine, weekDates, data.expenses);
-  const complete = isWeekComplete(week, stats.currentDay);
+  // Per-goal counts for the selected week, out of the days that goal was
+  // actually running — not out of seven, and not out of four goals.
+  const myGoals = data.goals
+    .filter((g) => g.owner_member_id === null || g.owner_member_id === me)
+    .sort((a, b) => a.sort_order - b.sort_order);
+
+  const rows = myGoals
+    .map((g) => {
+      const activeDates = weekDates.filter((d) => goalActiveOn(g, d));
+      if (activeDates.length === 0) return null;
+      const met = activeDates.filter((d) =>
+        data.logs.some(
+          (l) => l.member_id === me && l.goal_id === g.id && l.date === d && logMeetsTarget(g, l),
+        ),
+      ).length;
+      // A weekly goal's denominator is its per-week target. Showing "1 / 7
+      // days" for a 3x-a-week goal invents a target the user never set.
+      const outOf = g.cadence === "weekly" ? g.target_per_period : activeDates.length;
+      const amount = data.logs
+        .filter((l) => l.member_id === me && l.goal_id === g.id && weekDates.includes(l.date))
+        .reduce((sum, l) => sum + Number(l.amount ?? 0), 0);
+      return { goal: g, met, outOf, amount };
+    })
+    .filter((r): r is NonNullable<typeof r> => r !== null);
+
+  const weekLogs = data.logs.filter((l) => l.member_id === me && weekDates.includes(l.date));
+  const daysShownUp = new Set(weekLogs.map((l) => l.date)).size;
+  const moments = weekLogs.filter((l) => l.goal_id === null);
+  // Past its last day, not merely on it — day 21 is still being lived.
+  const complete = progress.currentDay > week * 7;
 
   const existing = data.reviews.find((r) => r.member_id === me && r.week_number === week);
   const [well, setWell] = useState(existing?.what_went_well ?? "");
@@ -106,16 +143,30 @@ function ReviewView({
 
       <section className="surface space-y-3 p-5">
         <h2 className="text-lg">{complete ? `Week ${week} complete 🎉` : `Week ${week} so far`}</h2>
-        <Row label="Morning walk" value={`${summary.walkDays} / ${summary.daysCounted} days`} />
-        <Row
-          label="Healthy food"
-          value={`${summary.healthyDays} healthy days + ${summary.cheatSundays} cheat day${
-            summary.cheatSundays === 1 ? "" : "s"
-          }`}
-        />
-        <Row label="Unnecessary spending" value={`${formatMoney(summary.avoided)} avoided`} />
-        <Row label="Certification" value={formatMinutes(summary.studyMinutes)} />
-        <Row label="Overall" value={`${summary.overallPct}%`} />
+        <Row label="Days you showed up" value={`${daysShownUp} / ${weekDates.length}`} />
+        {rows.map((r) => (
+          <Row
+            key={r.goal.id}
+            label={`${r.goal.icon ? `${r.goal.icon} ` : ""}${r.goal.title}`}
+            value={
+              r.goal.cadence === "open"
+                ? `${r.met} added`
+                : `${r.met}${r.outOf === null ? "" : ` / ${r.outOf}`}${
+                    r.goal.cadence === "weekly" ? " this week" : " days"
+                  }${
+                    r.goal.metric === "number" && r.amount > 0
+                      ? ` · ${r.amount}${r.goal.unit ? ` ${r.goal.unit}` : ""}`
+                      : ""
+                  }`
+            }
+          />
+        ))}
+        {rows.length === 0 ? (
+          <p className="text-sm text-muted-foreground">No goals were running this week.</p>
+        ) : null}
+        {moments.length > 0 ? (
+          <Row label="Memories kept" value={`${moments.length}`} />
+        ) : null}
       </section>
 
       <section className="surface space-y-3 p-5">
@@ -149,7 +200,7 @@ function ReviewView({
 
       {partnerReviews.length > 0 ? (
         <section className="surface space-y-2 p-5 text-sm">
-          <h2 className="text-lg">From your partner</h2>
+          <h2 className="text-lg">From the others</h2>
           {partnerReviews.map((r) => (
             <div key={r.id} className="space-y-1">
               <p>

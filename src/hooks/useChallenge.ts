@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import * as api from "@/data";
 import type { AvoidedExpense, Journey, DailyHabit, Member } from "@/lib/challenge";
+import type { Goal, Log } from "@/lib/goals";
 
 export interface WeeklyReview {
   id: string;
@@ -51,9 +52,16 @@ export function useMyMember(userId: string | null) {
 export interface ChallengeData {
   journey: Journey;
   members: Member[];
+  /**
+   * The pre-P2 habit rows. Still fetched because nothing reads them any more
+   * but the table is not dropped until the new path has proven itself in
+   * production. Remove this, the table, and the fetch together.
+   */
   habits: DailyHabit[];
   expenses: AvoidedExpense[];
   reviews: WeeklyReview[];
+  goals: Goal[];
+  logs: Log[];
 }
 
 export function useChallengeData(journeyId: string | undefined) {
@@ -122,4 +130,163 @@ export function useReminders(memberId: string | undefined) {
     enabled: !!memberId,
     queryFn: (): Promise<Reminder[]> => api.listReminders(memberId!),
   });
+}
+
+/**
+ * Toggle a dated goal (daily or weekly) for one day.
+ *
+ * The old useHabitMutation patched a single cached row because there was
+ * exactly one habit row per member per day. Logs are a list, and the same goal
+ * can be logged, untoggled and logged again, so the optimistic update
+ * replaces-or-appends rather than patching in place.
+ */
+export function useGoalLogMutation(journeyId: string | undefined, memberId: string | undefined) {
+  const qc = useQueryClient();
+  const queryKey = ["challenge", journeyId];
+
+  return useMutation({
+    mutationFn: ({
+      goal,
+      date,
+      on,
+      amount,
+      note,
+    }: {
+      goal: Goal;
+      date: string;
+      on: boolean;
+      amount?: number | null;
+      note?: string | null;
+    }) =>
+      on
+        ? api.upsertGoalLog({
+            memberId: memberId!,
+            goalId: goal.id,
+            date,
+            amount: amount ?? null,
+            note: note ?? null,
+          })
+        : api.deleteGoalLog({ memberId: memberId!, goalId: goal.id, date }),
+
+    // Move the checkmark now, reconcile later. A tap that waits on a
+    // seven-table refetch spends the whole "30 seconds a day" budget.
+    onMutate: async ({ goal, date, on, amount, note }) => {
+      await qc.cancelQueries({ queryKey });
+      const previous = qc.getQueryData<ChallengeData>(queryKey);
+      if (!previous || !memberId || !journeyId) return { previous };
+
+      const matches = (l: Log) =>
+        l.member_id === memberId && l.goal_id === goal.id && l.date === date;
+
+      let logs: Log[];
+      if (!on) {
+        logs = previous.logs.filter((l) => !matches(l));
+      } else if (previous.logs.some(matches)) {
+        logs = previous.logs.map((l) =>
+          matches(l) ? { ...l, done: true, amount: amount ?? null, note: note ?? null } : l,
+        );
+      } else {
+        logs = [
+          ...previous.logs,
+          {
+            id: `optimistic-${goal.id}-${date}`,
+            journey_id: journeyId,
+            member_id: memberId,
+            goal_id: goal.id,
+            date,
+            occurred_at: new Date().toISOString(),
+            // Mirrors the database trigger: dated goals get the date, open
+            // goals get nothing.
+            slot: goal.cadence === "open" ? null : date,
+            done: true,
+            amount: amount ?? null,
+            note: note ?? null,
+            place: null,
+          },
+        ];
+      }
+
+      qc.setQueryData<ChallengeData>(queryKey, { ...previous, logs });
+      return { previous };
+    },
+
+    onError: (_error, _variables, context) => {
+      if (context?.previous) qc.setQueryData(queryKey, context.previous);
+    },
+
+    // Refetch either way so the optimistic row picks up its real id and the
+    // slot the trigger actually assigned.
+    onSettled: () => qc.invalidateQueries({ queryKey }),
+  });
+}
+
+/**
+ * Add a log that always inserts: open goals and memories both allow many per
+ * day, so there is nothing to upsert against.
+ */
+export function useAddLogMutation(journeyId: string | undefined, memberId: string | undefined) {
+  const qc = useQueryClient();
+  const queryKey = ["challenge", journeyId];
+
+  return useMutation({
+    mutationFn: (input: {
+      goalId: string | null;
+      date: string;
+      amount?: number | null;
+      note?: string | null;
+      place?: string | null;
+    }) => api.addLog({ memberId: memberId!, ...input }),
+    onSuccess: () => qc.invalidateQueries({ queryKey }),
+  });
+}
+
+export function useDeleteLogMutation(journeyId: string | undefined) {
+  const qc = useQueryClient();
+  const queryKey = ["challenge", journeyId];
+
+  return useMutation({
+    mutationFn: (logId: string) => api.deleteLog(logId),
+    onMutate: async (logId) => {
+      await qc.cancelQueries({ queryKey });
+      const previous = qc.getQueryData<ChallengeData>(queryKey);
+      if (previous) {
+        qc.setQueryData<ChallengeData>(queryKey, {
+          ...previous,
+          logs: previous.logs.filter((l) => l.id !== logId),
+        });
+      }
+      return { previous };
+    },
+    onError: (_e, _v, context) => {
+      if (context?.previous) qc.setQueryData(queryKey, context.previous);
+    },
+    onSettled: () => qc.invalidateQueries({ queryKey }),
+  });
+}
+
+/* ---------- goal management ---------- */
+
+export function useGoalTemplates() {
+  return useQuery({
+    queryKey: ["goal-templates"],
+    queryFn: () => api.listGoalTemplates(),
+    // Reference data: it only changes when a migration adds a template.
+    staleTime: Infinity,
+  });
+}
+
+export function useGoalMutations(journeyId: string | undefined) {
+  const qc = useQueryClient();
+  const invalidate = () => qc.invalidateQueries({ queryKey: ["challenge", journeyId] });
+
+  return {
+    create: useMutation({ mutationFn: api.createGoal, onSuccess: invalidate }),
+    update: useMutation({
+      mutationFn: ({ goalId, patch }: { goalId: string; patch: Partial<Goal> }) =>
+        api.updateGoal(goalId, patch),
+      onSuccess: invalidate,
+    }),
+    archive: useMutation({ mutationFn: api.archiveGoal, onSuccess: invalidate }),
+    applyTemplate: useMutation({ mutationFn: api.applyGoalTemplate, onSuccess: invalidate }),
+  };
 }

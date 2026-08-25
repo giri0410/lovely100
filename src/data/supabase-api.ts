@@ -148,10 +148,12 @@ export interface RealChallengeData {
   habits: DailyHabit[];
   expenses: AvoidedExpense[];
   reviews: { id: string; member_id: string; week_number: number; what_went_well: string | null; what_to_improve: string | null }[];
+  goals: Goal[];
+  logs: Log[];
 }
 
 export async function getChallengeData(journeyId: string): Promise<RealChallengeData> {
-  const [journeyRes, membersRes, habitsRes, expensesRes, reviewsRes] = await Promise.all([
+  const [journeyRes, membersRes, habitsRes, expensesRes, reviewsRes, goalsRes, logsRes] = await Promise.all([
     supabase.from("journeys").select("*").eq("id", journeyId).single(),
     supabase.from("members").select("*").eq("journey_id", journeyId),
     supabase.from("daily_habits").select("*").eq("journey_id", journeyId).order("date", { ascending: true }),
@@ -161,9 +163,18 @@ export async function getChallengeData(journeyId: string): Promise<RealChallenge
       .eq("journey_id", journeyId)
       .order("date", { ascending: false }),
     supabase.from("weekly_reviews").select("*").eq("journey_id", journeyId),
+    supabase.from("goals").select("*").eq("journey_id", journeyId).order("sort_order", { ascending: true }),
+    supabase.from("logs").select("*").eq("journey_id", journeyId).order("date", { ascending: true }),
   ]);
 
-  const error = journeyRes.error || membersRes.error || habitsRes.error || expensesRes.error || reviewsRes.error;
+  const error =
+    journeyRes.error ||
+    membersRes.error ||
+    habitsRes.error ||
+    expensesRes.error ||
+    reviewsRes.error ||
+    goalsRes.error ||
+    logsRes.error;
   if (error) throw new Error(error.message);
 
   return {
@@ -172,6 +183,8 @@ export async function getChallengeData(journeyId: string): Promise<RealChallenge
     habits: (habitsRes.data ?? []) as DailyHabit[],
     expenses: (expensesRes.data ?? []) as AvoidedExpense[],
     reviews: reviewsRes.data ?? [],
+    goals: (goalsRes.data ?? []) as Goal[],
+    logs: (logsRes.data ?? []) as Log[],
   };
 }
 
