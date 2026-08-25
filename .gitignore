@@ -37,3 +37,6 @@ dist-ssr
 
 # This project installs with bun (bun.lock)
 package-lock.json
+
+# Supabase CLI scratch files (project ref, cached CLI version)
+supabase/.temp/
