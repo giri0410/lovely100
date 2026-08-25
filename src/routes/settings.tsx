@@ -7,6 +7,7 @@ import * as api from "@/data";
 import { useReminders } from "@/hooks/useChallenge";
 import { Switch } from "@/components/ui/switch";
 import type { Journey, Member } from "@/lib/challenge";
+import type { Goal } from "@/lib/goals";
 import {
   applyThemePreference,
   readThemePreference,
@@ -157,18 +158,25 @@ function AppearanceSection() {
   );
 }
 
-const REMINDER_TYPES = [
-  { type: "walk", label: "Morning walk", time: "06:30" },
-  { type: "certification", label: "Certification study", time: "20:00" },
-  { type: "daily", label: "Daily habit check-in", time: "21:30" },
-  { type: "weekly", label: "Sunday weekly review", time: "18:00" },
+/**
+ * The two reminders that are not about any single goal. Everything else is
+ * generated from the member's own goals — there is no list of habit names here
+ * any more, which was the point of P5.
+ */
+const JOURNEY_REMINDERS = [
+  { type: "daily", label: "End-of-day check-in", hint: "What's still open today", time: "21:30" },
+  { type: "weekly", label: "Sunday weekly review", hint: "Only on Sundays", time: "18:00" },
 ];
 
 function SettingsPage() {
-  return <AppShell>{({ me, data }) => <SettingsView me={me} journey={data.journey} />}</AppShell>;
+  return (
+    <AppShell>
+      {({ me, data }) => <SettingsView me={me} journey={data.journey} goals={data.goals} />}
+    </AppShell>
+  );
 }
 
-function SettingsView({ me, journey }: { me: Member; journey: Journey }) {
+function SettingsView({ me, journey, goals }: { me: Member; journey: Journey; goals: Goal[] }) {
   const qc = useQueryClient();
   const navigate = useNavigate();
   const [name, setName] = useState(me.name);
@@ -195,11 +203,27 @@ function SettingsView({ me, journey }: { me: Member; journey: Journey }) {
   });
 
   const saveReminder = useMutation({
-    mutationFn: ({ type, enabled, time }: { type: string; enabled: boolean; time: string }) =>
-      api.upsertReminder({ memberId: me.id, type, enabled, time }),
+    mutationFn: ({
+      type,
+      goalId,
+      enabled,
+      time,
+    }: {
+      type: string;
+      goalId?: string | null;
+      enabled: boolean;
+      time: string;
+    }) => api.upsertReminder({ memberId: me.id, type, goalId: goalId ?? null, enabled, time }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["reminders", me.id] }),
     onError: (e: Error) => toast.error(e.message),
   });
+
+  // Dated goals only — an open goal has no day it is due on, so a reminder
+  // for it would fire every day about nothing in particular.
+  const myGoals = goals
+    .filter((g) => g.owner_member_id === null || g.owner_member_id === me.id)
+    .filter((g) => !g.archived_at && g.cadence !== "open")
+    .sort((a, b) => a.sort_order - b.sort_order);
 
   const signOut = async () => {
     await api.auth.signOut();
@@ -273,14 +297,16 @@ function SettingsView({ me, journey }: { me: Member; journey: Journey }) {
             Sent by email, at your times. We skip the ones you've already done.
           </p>
         </div>
-        {REMINDER_TYPES.map((r) => {
-          const saved = reminders.data?.find((x) => x.reminder_type === r.type);
+
+        {JOURNEY_REMINDERS.map((r) => {
+          const saved = reminders.data?.find((x) => x.reminder_type === r.type && !x.goal_id);
           const enabled = saved?.enabled ?? false;
           const time = (saved?.reminder_time ?? r.time).slice(0, 5);
           return (
             <div key={r.type} className="flex items-center justify-between gap-3">
               <div>
                 <p className="text-sm font-medium">{r.label}</p>
+                <p className="text-xs text-muted-foreground">{r.hint}</p>
                 <input
                   type="time"
                   value={time}
@@ -295,6 +321,47 @@ function SettingsView({ me, journey }: { me: Member; journey: Journey }) {
             </div>
           );
         })}
+
+        {/* One optional reminder per goal, from the goals themselves. Open
+            goals are excluded: there is no day they are due on. */}
+        {myGoals.length > 0 ? (
+          <div className="space-y-4 border-t border-border pt-4">
+            <p className="text-sm font-medium">Per goal</p>
+            {myGoals.map((g) => {
+              const saved = reminders.data?.find((x) => x.goal_id === g.id);
+              const enabled = saved?.enabled ?? false;
+              const time = (saved?.reminder_time ?? "07:00").slice(0, 5);
+              return (
+                <div key={g.id} className="flex items-center justify-between gap-3">
+                  <div>
+                    <p className="text-sm font-medium">
+                      {g.icon ? `${g.icon} ` : ""}
+                      {g.title}
+                    </p>
+                    <input
+                      type="time"
+                      value={time}
+                      onChange={(e) =>
+                        saveReminder.mutate({ type: "goal", goalId: g.id, enabled, time: e.target.value })
+                      }
+                      className="mt-1 rounded-lg border border-input bg-background px-2 py-1 text-sm"
+                    />
+                  </div>
+                  <Switch
+                    checked={enabled}
+                    onCheckedChange={(v) =>
+                      saveReminder.mutate({ type: "goal", goalId: g.id, enabled: v, time })
+                    }
+                  />
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          <p className="border-t border-border pt-4 text-sm text-muted-foreground">
+            Set some goals and you can add a reminder for each one.
+          </p>
+        )}
       </section>
 
       <AppearanceSection />

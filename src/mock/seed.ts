@@ -21,6 +21,7 @@ export interface MockReminder {
   id: string;
   member_id: string;
   reminder_type: string;
+  goal_id: string | null;
   enabled: boolean;
   reminder_time: string;
 }
@@ -182,8 +183,7 @@ export function createSeedDatabase(): MockDatabase {
   ];
 
   const reminders: MockReminder[] = [
-    { id: uid("rem"), member_id: DEMO_ALEX_ID, reminder_type: "walk", enabled: true, reminder_time: "06:30" },
-    { id: uid("rem"), member_id: DEMO_ALEX_ID, reminder_type: "daily", enabled: true, reminder_time: "21:30" },
+    { id: uid("rem"), member_id: DEMO_ALEX_ID, reminder_type: "daily", enabled: true, reminder_time: "21:30", goal_id: null },
   ];
 
   const users: MockUser[] = [

@@ -264,18 +264,28 @@ export async function listReminders(memberId: string) {
 
 export async function upsertReminder(input: {
   memberId: string;
+  /** 'goal' | 'daily' | 'weekly'. */
   type: string;
+  /** Required for a 'goal' reminder, and must be null for the others. */
+  goalId?: string | null;
   enabled: boolean;
   time: string;
 }): Promise<void> {
+  const goalId = input.goalId ?? null;
+  // Two partial unique indexes cover this table, so the conflict target
+  // depends on the kind of reminder: per-goal rows key on goal_id, and the
+  // journey-level ones on reminder_type.
+  const onConflict = goalId ? "member_id,goal_id" : "member_id,reminder_type";
+
   const { error } = await supabase.from("reminders").upsert(
     {
       member_id: input.memberId,
       reminder_type: input.type,
+      goal_id: goalId,
       enabled: input.enabled,
       reminder_time: input.time,
     },
-    { onConflict: "member_id,reminder_type" },
+    { onConflict },
   );
   if (error) throw new Error(error.message);
 }

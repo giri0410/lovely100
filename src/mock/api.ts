@@ -361,12 +361,19 @@ export async function listReminders(memberId: string): Promise<MockReminder[]> {
 export async function upsertReminder(input: {
   memberId: string;
   type: string;
+  goalId?: string | null;
   enabled: boolean;
   time: string;
 }): Promise<void> {
   hydrate();
   await delay(null);
-  const existing = db.reminders.find((r) => r.member_id === input.memberId && r.reminder_type === input.type);
+  const goalId = input.goalId ?? null;
+  // Mirrors the two partial unique indexes: a goal reminder is identified by
+  // its goal, and a journey-level one by its type.
+  const existing = db.reminders.find((r) =>
+    r.member_id === input.memberId &&
+    (goalId ? r.goal_id === goalId : r.goal_id == null && r.reminder_type === input.type),
+  );
   if (existing) {
     existing.enabled = input.enabled;
     existing.reminder_time = input.time;
@@ -375,6 +382,7 @@ export async function upsertReminder(input: {
       id: uid("rem"),
       member_id: input.memberId,
       reminder_type: input.type,
+      goal_id: goalId,
       enabled: input.enabled,
       reminder_time: input.time,
     });

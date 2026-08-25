@@ -15,7 +15,10 @@ export interface WeeklyReview {
 export interface Reminder {
   id: string;
   member_id: string;
+  /** 'goal' | 'daily' | 'weekly'. */
   reminder_type: string;
+  /** Set only for a 'goal' reminder. */
+  goal_id: string | null;
   enabled: boolean;
   reminder_time: string;
 }

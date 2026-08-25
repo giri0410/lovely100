@@ -427,6 +427,7 @@ export type Database = {
         Row: {
           created_at: string
           enabled: boolean
+          goal_id: string | null
           id: string
           member_id: string
           reminder_time: string
@@ -435,6 +436,7 @@ export type Database = {
         Insert: {
           created_at?: string
           enabled?: boolean
+          goal_id?: string | null
           id?: string
           member_id: string
           reminder_time?: string
@@ -443,6 +445,7 @@ export type Database = {
         Update: {
           created_at?: string
           enabled?: boolean
+          goal_id?: string | null
           id?: string
           member_id?: string
           reminder_time?: string
