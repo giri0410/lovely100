@@ -626,6 +626,10 @@ export async function archiveGoal(goalId: string): Promise<void> {
   hydrate();
   const g = db.goals.find((x) => x.id === goalId);
   if (g) g.archived_at = new Date().toISOString();
+  // Mirrors the real backend: a reminder for an archived goal would never
+  // fire, and Settings hides archived goals, so the toggle would be stuck on
+  // out of sight.
+  db.reminders.filter((r) => r.goal_id === goalId).forEach((r) => (r.enabled = false));
   persist();
   return delay(undefined);
 }
@@ -635,10 +639,20 @@ export async function applyGoalTemplate(input: {
   ownerMemberId: string | null;
   template: GoalTemplate;
   startsOn?: string;
-}): Promise<void> {
+}): Promise<{ added: number; skipped: number }> {
   hydrate();
   const startsOn = input.startsOn ?? todayISO();
-  input.template.goals.forEach((g, i) => {
+
+  // Same de-duplication as the real backend: adding a template you already
+  // hold must not duplicate its goals.
+  const held = new Set(
+    db.goals
+      .filter((g) => g.journey_id === input.journeyId && !g.archived_at)
+      .map((g) => g.title.trim().toLowerCase()),
+  );
+  const fresh = input.template.goals.filter((g) => !held.has(g.title.trim().toLowerCase()));
+
+  fresh.forEach((g, i) => {
     db.goals.push({
       id: `goal-${crypto.randomUUID()}`,
       journey_id: input.journeyId,
@@ -658,7 +672,7 @@ export async function applyGoalTemplate(input: {
     });
   });
   persist();
-  return delay(undefined);
+  return delay({ added: fresh.length, skipped: input.template.goals.length - fresh.length });
 }
 
 /**

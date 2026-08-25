@@ -429,6 +429,17 @@ export async function archiveGoal(goalId: string): Promise<void> {
     .update({ archived_at: new Date().toISOString() })
     .eq("id", goalId);
   if (error) throw new Error(error.message);
+
+  // Turn off any reminder for it. reminders_due already refuses to fire on an
+  // archived goal, so leaving the row enabled would be a silent lie: Settings
+  // hides archived goals, so the toggle would sit switched on somewhere the
+  // user cannot see or reach. Disabled rather than deleted, so un-archiving
+  // later brings the configured time back.
+  const { error: remError } = await supabase
+    .from("reminders")
+    .update({ enabled: false })
+    .eq("goal_id", goalId);
+  if (remError) throw new Error(remError.message);
 }
 
 /**
@@ -442,9 +453,29 @@ export async function applyGoalTemplate(input: {
   ownerMemberId: string | null;
   template: GoalTemplate;
   startsOn?: string;
-}): Promise<void> {
+}): Promise<{ added: number; skipped: number }> {
   const startsOn = input.startsOn ?? todayISO();
-  const rows = input.template.goals.map((g, i) => ({
+
+  // Skip goals the journey already has under the same name.
+  //
+  // Without this, adding a template you already hold silently duplicates every
+  // goal in it — which is exactly what happened in production when the
+  // original-four template was added on top of the four the P2 backfill had
+  // already created. The migration's own backfill guarded against this; this
+  // path did not.
+  const { data: existing, error: readError } = await supabase
+    .from("goals")
+    .select("title")
+    .eq("journey_id", input.journeyId)
+    .is("archived_at", null);
+  if (readError) throw new Error(readError.message);
+
+  const held = new Set((existing ?? []).map((g) => g.title.trim().toLowerCase()));
+  const fresh = input.template.goals.filter((g) => !held.has(g.title.trim().toLowerCase()));
+
+  if (fresh.length === 0) return { added: 0, skipped: input.template.goals.length };
+
+  const rows = fresh.map((g, i) => ({
     journey_id: input.journeyId,
     owner_member_id: input.ownerMemberId,
     title: g.title,
@@ -460,6 +491,7 @@ export async function applyGoalTemplate(input: {
   }));
   const { error } = await supabase.from("goals").insert(rows);
   if (error) throw new Error(error.message);
+  return { added: fresh.length, skipped: input.template.goals.length - fresh.length };
 }
 
 /**

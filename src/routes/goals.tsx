@@ -193,7 +193,14 @@ function GoalsView({
                   applyTemplate.mutate(
                     { journeyId, ownerMemberId: null, template: tpl, startsOn: todayISO() },
                     {
-                      onSuccess: () => toast.success(`${tpl.title} added 💛`),
+                      onSuccess: (r) => {
+                        // Saying "added" when everything was skipped is the
+                        // kind of small lie that makes people distrust the app.
+                        if (r.added === 0) toast.info("You already have all of those");
+                        else if (r.skipped > 0)
+                          toast.success(`Added ${r.added} — you already had ${r.skipped}`);
+                        else toast.success(`${tpl.title} added 💛`);
+                      },
                       onError: (e: Error) => toast.error(e.message),
                     },
                   )
