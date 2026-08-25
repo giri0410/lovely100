@@ -1,5 +1,5 @@
 /**
- * Account deletion for 100 Days Together.
+ * Account deletion for Lovely 100.
  *
  * Apple requires any app offering account creation to offer in-app deletion
  * (App Store Review Guideline 5.1.1(v)), and Google has an equivalent data
@@ -64,15 +64,72 @@ Deno.serve(async (request) => {
   const userId = user.id;
   if (!userId) return json({ error: "session is not valid" }, 401);
 
-  // Remove the member first. Habits, avoided expenses, weekly reviews and
-  // reminders all reference it ON DELETE CASCADE, so this clears the person's
-  // own history in one statement. Their partner's rows are untouched.
+  // Find the member row before deleting anything, because everything else is
+  // reached through it.
+  const memberRes = await admin(`/rest/v1/members?auth_user_id=eq.${userId}&select=id,journey_id`);
+  if (!memberRes.ok) {
+    return json({ error: "could not look up your data", detail: await memberRes.text() }, 500);
+  }
+  const members = (await memberRes.json()) as { id: string; journey_id: string }[];
+  const member = members[0];
+
+  // Collect the storage paths BEFORE the rows go.
+  //
+  // media rows cascade away with the logs they hang off, but the objects in the
+  // bucket do not — Postgres knows nothing about them. Deleting the account
+  // without this step would leave the person's photos in storage for good,
+  // which is the opposite of what the privacy policy promises.
+  let paths: string[] = [];
+  if (member) {
+    const mediaRes = await admin(
+      `/rest/v1/media?select=storage_path,logs!inner(member_id)&logs.member_id=eq.${member.id}`,
+    );
+    if (mediaRes.ok) {
+      paths = ((await mediaRes.json()) as { storage_path: string }[]).map((m) => m.storage_path);
+    }
+  }
+
+  if (paths.length > 0) {
+    // Storage first: if this fails, nothing has been destroyed yet and the
+    // caller can retry. The other order would delete the index to files we
+    // could then never find again.
+    const removed = await admin(`/storage/v1/object/memories`, {
+      method: "DELETE",
+      body: JSON.stringify({ prefixes: paths }),
+    });
+    if (!removed.ok) {
+      return json({ error: "could not delete your photos", detail: await removed.text() }, 500);
+    }
+  }
+
+  // Remove the member. Logs, media rows, personal goals, avoided expenses,
+  // weekly reviews, reminders and the old habit rows all reference it ON DELETE
+  // CASCADE, so this clears the person's own history in one statement. Anyone
+  // else's rows in the same journey are untouched.
   const memberDelete = await admin(`/rest/v1/members?auth_user_id=eq.${userId}`, {
     method: "DELETE",
     headers: { Prefer: "return=minimal" },
   });
   if (!memberDelete.ok) {
-    return json({ error: "could not remove your challenge data", detail: await memberDelete.text() }, 500);
+    return json({ error: "could not remove your journey data", detail: await memberDelete.text() }, 500);
+  }
+
+  // If nobody is left, the journey goes too.
+  //
+  // Goals shared across a journey have no owner_member_id, so they do not
+  // cascade with any one member. Left alone, a solo account deletion would
+  // leave a journey nobody can ever reach — RLS resolves access through a
+  // member row — holding goals indefinitely after a deletion request.
+  if (member) {
+    const remaining = await admin(
+      `/rest/v1/members?journey_id=eq.${member.journey_id}&select=id`,
+    );
+    if (remaining.ok && ((await remaining.json()) as unknown[]).length === 0) {
+      await admin(`/rest/v1/journeys?id=eq.${member.journey_id}`, {
+        method: "DELETE",
+        headers: { Prefer: "return=minimal" },
+      });
+    }
   }
 
   // Any admin role grant would be orphaned otherwise.
