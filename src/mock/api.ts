@@ -10,6 +10,7 @@
  */
 import type { AvoidedExpense, Journey, DailyHabit, Member } from "@/lib/challenge";
 import { todayISO } from "@/lib/challenge";
+import type { Cadence, Goal, GoalTemplate, Log, Metric } from "@/lib/goals";
 import type { JourneyKind } from "@/lib/copy";
 import {
   createSeedDatabase,
@@ -464,4 +465,278 @@ export async function deleteUser(userId: string): Promise<void> {
 export async function sendPasswordReset(_email: string): Promise<void> {
   hydrate();
   await delay(null);
+}
+
+/**
+ * Mirrors the goal_templates rows the P2 migration inserts. Kept in sync by
+ * hand because mock mode has no database — if these drift, mock mode stops
+ * being a faithful rehearsal of the real thing.
+ */
+const MOCK_TEMPLATES: GoalTemplate[] = [
+  {
+    id: "tpl-original-four",
+    slug: "original-four",
+    title: "Health & discipline",
+    description: "The original Lovely 100 set: a walk, clean eating, no wasteful spending, and daily study.",
+    category: "health",
+    icon: "🌱",
+    sort_order: 10,
+    goals: [
+      { title: "Morning Walk", icon: "🚶", category: "health", cadence: "daily", metric: "number", unit: "minutes", target_per_period: 30 },
+      { title: "Healthy Food", icon: "🥗", category: "health", cadence: "daily", metric: "bool" },
+      { title: "No Unnecessary Spending", icon: "💸", category: "money", cadence: "daily", metric: "bool" },
+      { title: "Certification", icon: "📘", category: "learning", cadence: "daily", metric: "number", unit: "minutes", target_per_period: 30 },
+    ],
+  },
+  {
+    id: "tpl-cooking",
+    slug: "cooking",
+    title: "Cooking & food",
+    description: "Cook more, order less, and work through the recipes you keep meaning to try.",
+    category: "cooking",
+    icon: "🍳",
+    sort_order: 20,
+    goals: [
+      { title: "Cook at home", icon: "🍳", category: "cooking", cadence: "daily", metric: "bool" },
+      { title: "Try a new recipe", icon: "📖", category: "cooking", cadence: "weekly", metric: "bool", target_per_period: 1 },
+      { title: "Recipes to try", icon: "⭐", category: "cooking", cadence: "open", metric: "bool", target_total: 20 },
+    ],
+  },
+  {
+    id: "tpl-places",
+    slug: "places",
+    title: "Places & memories",
+    description: "Trips, small outings, and the days worth keeping.",
+    category: "travel",
+    icon: "✈️",
+    sort_order: 30,
+    goals: [
+      { title: "Places to visit", icon: "📍", category: "travel", cadence: "open", metric: "bool", target_total: 10 },
+      { title: "Go somewhere new", icon: "🗺️", category: "travel", cadence: "weekly", metric: "bool", target_per_period: 1 },
+      { title: "Photo of the day", icon: "📷", category: "memories", cadence: "daily", metric: "bool" },
+    ],
+  },
+  {
+    id: "tpl-movement",
+    slug: "movement",
+    title: "Sport & movement",
+    description: "Whatever moving well looks like for you.",
+    category: "health",
+    icon: "🏃",
+    sort_order: 40,
+    goals: [
+      { title: "Workout", icon: "🏋️", category: "health", cadence: "weekly", metric: "bool", target_per_period: 3 },
+      { title: "Steps", icon: "👟", category: "health", cadence: "daily", metric: "number", unit: "steps", target_per_period: 8000 },
+      { title: "Sleep by 11pm", icon: "😴", category: "health", cadence: "daily", metric: "bool" },
+    ],
+  },
+  {
+    id: "tpl-learning",
+    slug: "learning",
+    title: "Learning & money",
+    description: "Study a little every day, and track what you chose not to spend.",
+    category: "learning",
+    icon: "📘",
+    sort_order: 50,
+    goals: [
+      { title: "Study", icon: "📘", category: "learning", cadence: "daily", metric: "number", unit: "minutes", target_per_period: 30 },
+      { title: "Read", icon: "📚", category: "learning", cadence: "daily", metric: "number", unit: "pages", target_per_period: 10 },
+      { title: "No impulse buys", icon: "💸", category: "money", cadence: "daily", metric: "bool" },
+    ],
+  },
+];
+
+/* ---------- goals & logs (P2) ---------- */
+
+export async function listGoals(journeyId: string): Promise<Goal[]> {
+  hydrate();
+  return delay(clone(db.goals.filter((g) => g.journey_id === journeyId).sort((a, b) => a.sort_order - b.sort_order)));
+}
+
+export async function listLogs(journeyId: string): Promise<Log[]> {
+  hydrate();
+  return delay(clone(db.logs.filter((l) => l.journey_id === journeyId).sort((a, b) => a.date.localeCompare(b.date))));
+}
+
+export async function listGoalTemplates(): Promise<GoalTemplate[]> {
+  hydrate();
+  return delay(clone(MOCK_TEMPLATES));
+}
+
+export async function createGoal(input: {
+  journeyId: string;
+  ownerMemberId: string | null;
+  title: string;
+  category: string;
+  icon?: string | null;
+  cadence?: Cadence;
+  metric?: Metric;
+  unit?: string | null;
+  targetPerPeriod?: number | null;
+  targetTotal?: number | null;
+  startsOn?: string;
+  sortOrder?: number;
+}): Promise<Goal> {
+  hydrate();
+  const goal: Goal = {
+    id: `goal-${crypto.randomUUID()}`,
+    journey_id: input.journeyId,
+    owner_member_id: input.ownerMemberId,
+    category: input.category,
+    title: input.title,
+    icon: input.icon ?? null,
+    color: null,
+    cadence: input.cadence ?? "daily",
+    metric: input.metric ?? "bool",
+    unit: input.unit ?? null,
+    target_per_period: input.targetPerPeriod ?? null,
+    target_total: input.targetTotal ?? null,
+    starts_on: input.startsOn ?? todayISO(),
+    sort_order: input.sortOrder ?? db.goals.length + 1,
+    archived_at: null,
+  };
+  db.goals.push(goal);
+  persist();
+  return delay(clone(goal));
+}
+
+export async function updateGoal(goalId: string, patch: Partial<Goal>): Promise<void> {
+  hydrate();
+  const g = db.goals.find((x) => x.id === goalId);
+  if (g) Object.assign(g, patch);
+  persist();
+  return delay(undefined);
+}
+
+export async function archiveGoal(goalId: string): Promise<void> {
+  hydrate();
+  const g = db.goals.find((x) => x.id === goalId);
+  if (g) g.archived_at = new Date().toISOString();
+  persist();
+  return delay(undefined);
+}
+
+export async function applyGoalTemplate(input: {
+  journeyId: string;
+  ownerMemberId: string | null;
+  template: GoalTemplate;
+  startsOn?: string;
+}): Promise<void> {
+  hydrate();
+  const startsOn = input.startsOn ?? todayISO();
+  input.template.goals.forEach((g, i) => {
+    db.goals.push({
+      id: `goal-${crypto.randomUUID()}`,
+      journey_id: input.journeyId,
+      owner_member_id: input.ownerMemberId,
+      category: g.category ?? input.template.category,
+      title: g.title,
+      icon: g.icon ?? null,
+      color: null,
+      cadence: g.cadence ?? "daily",
+      metric: g.metric ?? "bool",
+      unit: g.unit ?? null,
+      target_per_period: g.target_per_period ?? null,
+      target_total: g.target_total ?? null,
+      starts_on: startsOn,
+      sort_order: db.goals.length + i + 1,
+      archived_at: null,
+    });
+  });
+  persist();
+  return delay(undefined);
+}
+
+/**
+ * Mirrors the real upsert, including the slot rule: dated goals are unique per
+ * member per day, so a repeat tap updates rather than duplicating.
+ */
+export async function upsertGoalLog(input: {
+  memberId: string;
+  goalId: string;
+  date: string;
+  done?: boolean;
+  amount?: number | null;
+  note?: string | null;
+}): Promise<void> {
+  hydrate();
+  const goal = db.goals.find((g) => g.id === input.goalId);
+  if (!goal) throw new Error("Goal not found");
+  const slot = goal.cadence === "open" ? null : input.date;
+
+  const existing = db.logs.find(
+    (l) => l.member_id === input.memberId && l.goal_id === input.goalId && l.slot === slot && slot !== null,
+  );
+  if (existing) {
+    existing.done = input.done ?? true;
+    existing.amount = input.amount ?? null;
+    existing.note = input.note ?? null;
+  } else {
+    const member = db.members.find((m) => m.id === input.memberId);
+    db.logs.push({
+      id: `log-${crypto.randomUUID()}`,
+      journey_id: member?.journey_id ?? goal.journey_id,
+      member_id: input.memberId,
+      goal_id: input.goalId,
+      date: input.date,
+      occurred_at: new Date().toISOString(),
+      slot,
+      done: input.done ?? true,
+      amount: input.amount ?? null,
+      note: input.note ?? null,
+      place: null,
+    });
+  }
+  persist();
+  return delay(undefined);
+}
+
+export async function deleteGoalLog(input: {
+  memberId: string;
+  goalId: string;
+  date: string;
+}): Promise<void> {
+  hydrate();
+  db.logs = db.logs.filter(
+    (l) => !(l.member_id === input.memberId && l.goal_id === input.goalId && l.date === input.date),
+  );
+  persist();
+  return delay(undefined);
+}
+
+export async function addLog(input: {
+  memberId: string;
+  goalId: string | null;
+  date: string;
+  amount?: number | null;
+  note?: string | null;
+  place?: string | null;
+}): Promise<Log> {
+  hydrate();
+  const member = db.members.find((m) => m.id === input.memberId);
+  const goal = input.goalId ? db.goals.find((g) => g.id === input.goalId) : undefined;
+  const log: Log = {
+    id: `log-${crypto.randomUUID()}`,
+    journey_id: member?.journey_id ?? goal?.journey_id ?? "",
+    member_id: input.memberId,
+    goal_id: input.goalId,
+    date: input.date,
+    occurred_at: new Date().toISOString(),
+    // Open goals and memories both accumulate, so no slot.
+    slot: goal && goal.cadence !== "open" ? input.date : null,
+    done: true,
+    amount: input.amount ?? null,
+    note: input.note ?? null,
+    place: input.place ?? null,
+  };
+  db.logs.push(log);
+  persist();
+  return delay(clone(log));
+}
+
+export async function deleteLog(logId: string): Promise<void> {
+  hydrate();
+  db.logs = db.logs.filter((l) => l.id !== logId);
+  persist();
+  return delay(undefined);
 }

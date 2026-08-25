@@ -6,6 +6,7 @@
  * ever talk to that module, never to this file directly.
  */
 import { addDays, toISO, type AvoidedExpense, type Journey, type DailyHabit, type Member } from "@/lib/challenge";
+import type { Goal, Log } from "@/lib/goals";
 
 export interface MockWeeklyReview {
   id: string;
@@ -34,11 +35,20 @@ export interface MockUser {
   is_admin: boolean;
 }
 
+const ORIGINAL_FOUR = [
+  { title: "Morning Walk", icon: "🚶", category: "health", metric: "number" as const, unit: "minutes", target_per_period: 30 },
+  { title: "Healthy Food", icon: "🥗", category: "health", metric: "bool" as const, unit: null, target_per_period: null },
+  { title: "No Unnecessary Spending", icon: "💸", category: "money", metric: "bool" as const, unit: null, target_per_period: null },
+  { title: "Certification", icon: "📘", category: "learning", metric: "number" as const, unit: "minutes", target_per_period: 30 },
+];
+
 export interface MockDatabase {
   users: MockUser[];
   journeys: Journey[];
   members: Member[];
   habits: DailyHabit[];
+  goals: Goal[];
+  logs: Log[];
   expenses: AvoidedExpense[];
   reviews: MockWeeklyReview[];
   reminders: MockReminder[];
@@ -188,5 +198,59 @@ export function createSeedDatabase(): MockDatabase {
     },
   ];
 
-  return { users, journeys: [journey], members, habits, expenses, reviews, reminders, sessionUserId: null };
+  // The original four, as goals rather than columns — mock mode has to model
+  // the same shape the real backend now has, or it stops proving anything.
+  const goals: Goal[] = ORIGINAL_FOUR.map((g, i) => ({
+    id: `goal-${i + 1}`,
+    journey_id: journey.id,
+    owner_member_id: null,
+    category: g.category,
+    title: g.title,
+    icon: g.icon,
+    color: null,
+    cadence: "daily",
+    metric: g.metric,
+    unit: g.unit,
+    target_per_period: g.target_per_period,
+    target_total: null,
+    starts_on: journey.start_date,
+    sort_order: i + 1,
+    archived_at: null,
+  }));
+
+  // Fan the seeded habit rows into logs, the same way the P2 migration does.
+  const logs: Log[] = [];
+  for (const h of habits) {
+    const done: Array<[string, number | null]> = [
+      ["Morning Walk", h.walk_completed ? (h.walk_duration ?? null) : null],
+      ["Healthy Food", h.healthy_food_completed ? null : null],
+      ["No Unnecessary Spending", h.unnecessary_spending_completed ? null : null],
+      ["Certification", h.certification_completed ? (h.certification_minutes ?? null) : null],
+    ];
+    const flags = [
+      h.walk_completed,
+      h.healthy_food_completed,
+      h.unnecessary_spending_completed,
+      h.certification_completed,
+    ];
+    flags.forEach((completed, idx) => {
+      if (!completed) return;
+      const goal = goals[idx]!;
+      logs.push({
+        id: `log-${h.id}-${idx}`,
+        journey_id: journey.id,
+        member_id: h.member_id,
+        goal_id: goal.id,
+        date: h.date,
+        occurred_at: `${h.date}T07:00:00.000Z`,
+        slot: h.date,
+        done: true,
+        amount: done[idx]![1],
+        note: idx === 3 ? (h.certification_topic ?? null) : null,
+        place: null,
+      });
+    });
+  }
+
+  return { users, journeys: [journey], members, habits, goals, logs, expenses, reviews, reminders, sessionUserId: null };
 }

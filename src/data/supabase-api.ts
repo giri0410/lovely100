@@ -7,6 +7,9 @@
  */
 import { supabase } from "@/integrations/supabase/client";
 import type { AvoidedExpense, Journey, DailyHabit, Member } from "@/lib/challenge";
+import { todayISO } from "@/lib/challenge";
+import type { Cadence, Goal, GoalTemplate, Log, Metric } from "@/lib/goals";
+import { parseTemplateGoals } from "@/lib/goals";
 import type { JourneyKind } from "@/lib/copy";
 
 /**
@@ -310,4 +313,207 @@ export async function deleteUser(userId: string): Promise<void> {
 
 export async function sendPasswordReset(email: string): Promise<void> {
   await (await adminFns()).sendPasswordReset({ data: { email } });
+}
+
+/* ---------- goals & logs (P2) ---------- */
+
+export async function listGoals(journeyId: string): Promise<Goal[]> {
+  const { data, error } = await supabase
+    .from("goals")
+    .select("*")
+    .eq("journey_id", journeyId)
+    .order("sort_order", { ascending: true });
+  if (error) throw new Error(error.message);
+  return (data ?? []) as Goal[];
+}
+
+export async function listLogs(journeyId: string): Promise<Log[]> {
+  const { data, error } = await supabase
+    .from("logs")
+    .select("*")
+    .eq("journey_id", journeyId)
+    .order("date", { ascending: true });
+  if (error) throw new Error(error.message);
+  return (data ?? []) as Log[];
+}
+
+export async function listGoalTemplates(): Promise<GoalTemplate[]> {
+  const { data, error } = await supabase
+    .from("goal_templates")
+    .select("*")
+    .order("sort_order", { ascending: true });
+  if (error) throw new Error(error.message);
+  // `goals` is arbitrary jsonb in the database, so it is validated rather
+  // than cast — see parseTemplateGoals.
+  return (data ?? []).map((row) => ({
+    ...row,
+    goals: parseTemplateGoals(row.goals),
+  })) as GoalTemplate[];
+}
+
+export async function createGoal(input: {
+  journeyId: string;
+  ownerMemberId: string | null;
+  title: string;
+  category: string;
+  icon?: string | null;
+  cadence?: Cadence;
+  metric?: Metric;
+  unit?: string | null;
+  targetPerPeriod?: number | null;
+  targetTotal?: number | null;
+  /**
+   * Defaults to today, never to the journey's start date. A goal added on day
+   * 40 must not report 39 retroactive misses.
+   */
+  startsOn?: string;
+  sortOrder?: number;
+}): Promise<Goal> {
+  const { data, error } = await supabase
+    .from("goals")
+    .insert({
+      journey_id: input.journeyId,
+      owner_member_id: input.ownerMemberId,
+      title: input.title,
+      category: input.category,
+      icon: input.icon ?? null,
+      cadence: input.cadence ?? "daily",
+      metric: input.metric ?? "bool",
+      unit: input.unit ?? null,
+      target_per_period: input.targetPerPeriod ?? null,
+      target_total: input.targetTotal ?? null,
+      starts_on: input.startsOn ?? todayISO(),
+      sort_order: input.sortOrder ?? 0,
+    })
+    .select()
+    .single();
+  if (error) throw new Error(error.message);
+  return data as Goal;
+}
+
+export async function updateGoal(goalId: string, patch: Partial<Goal>): Promise<void> {
+  const { error } = await supabase.from("goals").update(patch).eq("id", goalId);
+  if (error) throw new Error(error.message);
+}
+
+/**
+ * Archive rather than delete. A goal someone kept for 60 days is part of their
+ * story, and deleting it would take its logs with it via ON DELETE CASCADE.
+ */
+export async function archiveGoal(goalId: string): Promise<void> {
+  const { error } = await supabase
+    .from("goals")
+    .update({ archived_at: new Date().toISOString() })
+    .eq("id", goalId);
+  if (error) throw new Error(error.message);
+}
+
+/**
+ * Apply a template's goals to a journey.
+ *
+ * starts_on is today for every goal, so adding a template mid-journey does not
+ * backdate misses.
+ */
+export async function applyGoalTemplate(input: {
+  journeyId: string;
+  ownerMemberId: string | null;
+  template: GoalTemplate;
+  startsOn?: string;
+}): Promise<void> {
+  const startsOn = input.startsOn ?? todayISO();
+  const rows = input.template.goals.map((g, i) => ({
+    journey_id: input.journeyId,
+    owner_member_id: input.ownerMemberId,
+    title: g.title,
+    category: g.category ?? input.template.category,
+    icon: g.icon ?? null,
+    cadence: g.cadence ?? "daily",
+    metric: g.metric ?? "bool",
+    unit: g.unit ?? null,
+    target_per_period: g.target_per_period ?? null,
+    target_total: g.target_total ?? null,
+    starts_on: startsOn,
+    sort_order: i + 1,
+  }));
+  const { error } = await supabase.from("goals").insert(rows);
+  if (error) throw new Error(error.message);
+}
+
+/**
+ * Log a dated goal (daily or weekly) for one day.
+ *
+ * Upserts on the trigger-derived slot, which is what makes tapping a goal
+ * twice idempotent instead of an error. `slot` and `journey_id` are omitted
+ * deliberately — the database assigns both, and a client that could set them
+ * could log under another journey or bypass the uniqueness key.
+ */
+export async function upsertGoalLog(input: {
+  memberId: string;
+  goalId: string;
+  date: string;
+  done?: boolean;
+  amount?: number | null;
+  note?: string | null;
+}): Promise<void> {
+  const { error } = await supabase.from("logs").upsert(
+    {
+      member_id: input.memberId,
+      goal_id: input.goalId,
+      date: input.date,
+      done: input.done ?? true,
+      amount: input.amount ?? null,
+      note: input.note ?? null,
+    },
+    { onConflict: "member_id,goal_id,slot" },
+  );
+  if (error) throw new Error(error.message);
+}
+
+/** Remove a dated goal's log for a day — untapping it. */
+export async function deleteGoalLog(input: {
+  memberId: string;
+  goalId: string;
+  date: string;
+}): Promise<void> {
+  const { error } = await supabase
+    .from("logs")
+    .delete()
+    .eq("member_id", input.memberId)
+    .eq("goal_id", input.goalId)
+    .eq("date", input.date);
+  if (error) throw new Error(error.message);
+}
+
+/**
+ * Add a log that is not an upsert: open goals and memories both allow many per
+ * day, so these always insert.
+ */
+export async function addLog(input: {
+  memberId: string;
+  goalId: string | null;
+  date: string;
+  amount?: number | null;
+  note?: string | null;
+  place?: string | null;
+}): Promise<Log> {
+  const { data, error } = await supabase
+    .from("logs")
+    .insert({
+      member_id: input.memberId,
+      goal_id: input.goalId,
+      date: input.date,
+      done: true,
+      amount: input.amount ?? null,
+      note: input.note ?? null,
+      place: input.place ?? null,
+    })
+    .select()
+    .single();
+  if (error) throw new Error(error.message);
+  return data as Log;
+}
+
+export async function deleteLog(logId: string): Promise<void> {
+  const { error } = await supabase.from("logs").delete().eq("id", logId);
+  if (error) throw new Error(error.message);
 }

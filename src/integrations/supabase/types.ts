@@ -62,6 +62,230 @@ export type Database = {
           },
         ]
       }
+      goals: {
+        Row: {
+          archived_at: string | null
+          cadence: string
+          category: string
+          color: string | null
+          created_at: string
+          icon: string | null
+          id: string
+          journey_id: string
+          metric: string
+          owner_member_id: string | null
+          sort_order: number
+          starts_on: string
+          target_per_period: number | null
+          target_total: number | null
+          title: string
+          unit: string | null
+          updated_at: string
+        }
+        Insert: {
+          archived_at?: string | null
+          cadence?: string
+          category?: string
+          color?: string | null
+          created_at?: string
+          icon?: string | null
+          id?: string
+          journey_id: string
+          metric?: string
+          owner_member_id?: string | null
+          sort_order?: number
+          starts_on?: string
+          target_per_period?: number | null
+          target_total?: number | null
+          title: string
+          unit?: string | null
+          updated_at?: string
+        }
+        Update: {
+          archived_at?: string | null
+          cadence?: string
+          category?: string
+          color?: string | null
+          created_at?: string
+          icon?: string | null
+          id?: string
+          journey_id?: string
+          metric?: string
+          owner_member_id?: string | null
+          sort_order?: number
+          starts_on?: string
+          target_per_period?: number | null
+          target_total?: number | null
+          title?: string
+          unit?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "goals_journey_id_fkey"
+            columns: ["journey_id"]
+            isOneToOne: false
+            referencedRelation: "journeys"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "goals_owner_member_id_fkey"
+            columns: ["owner_member_id"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      logs: {
+        Row: {
+          amount: number | null
+          created_at: string
+          date: string
+          done: boolean
+          goal_id: string | null
+          id: string
+          journey_id: string
+          member_id: string
+          note: string | null
+          occurred_at: string
+          place: string | null
+          slot: string | null
+          updated_at: string
+        }
+        Insert: {
+          amount?: number | null
+          created_at?: string
+          date?: string
+          done?: boolean
+          goal_id?: string | null
+          id?: string
+          // Trigger-assigned from the member; never sent by the client.
+          journey_id?: string
+          member_id: string
+          note?: string | null
+          occurred_at?: string
+          place?: string | null
+          // Trigger-assigned from the goal's cadence; never sent by the client.
+          slot?: string | null
+          updated_at?: string
+        }
+        Update: {
+          amount?: number | null
+          created_at?: string
+          date?: string
+          done?: boolean
+          goal_id?: string | null
+          id?: string
+          journey_id?: string
+          member_id?: string
+          note?: string | null
+          occurred_at?: string
+          place?: string | null
+          slot?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "logs_journey_id_fkey"
+            columns: ["journey_id"]
+            isOneToOne: false
+            referencedRelation: "journeys"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "logs_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "logs_goal_id_fkey"
+            columns: ["goal_id"]
+            isOneToOne: false
+            referencedRelation: "goals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      media: {
+        Row: {
+          bytes: number | null
+          created_at: string
+          height: number | null
+          id: string
+          log_id: string
+          mime: string | null
+          storage_path: string
+          width: number | null
+        }
+        Insert: {
+          bytes?: number | null
+          created_at?: string
+          height?: number | null
+          id?: string
+          log_id: string
+          mime?: string | null
+          storage_path: string
+          width?: number | null
+        }
+        Update: {
+          bytes?: number | null
+          created_at?: string
+          height?: number | null
+          id?: string
+          log_id?: string
+          mime?: string | null
+          storage_path?: string
+          width?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "media_log_id_fkey"
+            columns: ["log_id"]
+            isOneToOne: false
+            referencedRelation: "logs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      goal_templates: {
+        Row: {
+          category: string
+          created_at: string
+          description: string | null
+          goals: Json
+          icon: string | null
+          id: string
+          slug: string
+          sort_order: number
+          title: string
+        }
+        Insert: {
+          category?: string
+          created_at?: string
+          description?: string | null
+          goals: Json
+          icon?: string | null
+          id?: string
+          slug: string
+          sort_order?: number
+          title: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          description?: string | null
+          goals?: Json
+          icon?: string | null
+          id?: string
+          slug?: string
+          sort_order?: number
+          title?: string
+        }
+        Relationships: []
+      }
       journeys: {
         Row: {
           created_at: string

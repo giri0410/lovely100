@@ -37,4 +37,17 @@ export const adminUpdateMember = useMock ? mockApi.adminUpdateMember : realApi.a
 export const deleteUser = useMock ? mockApi.deleteUser : realApi.deleteUser;
 export const sendPasswordReset = useMock ? mockApi.sendPasswordReset : realApi.sendPasswordReset;
 
+/* goals & logs (P2) */
+export const listGoals = useMock ? mockApi.listGoals : realApi.listGoals;
+export const listLogs = useMock ? mockApi.listLogs : realApi.listLogs;
+export const listGoalTemplates = useMock ? mockApi.listGoalTemplates : realApi.listGoalTemplates;
+export const createGoal = useMock ? mockApi.createGoal : realApi.createGoal;
+export const updateGoal = useMock ? mockApi.updateGoal : realApi.updateGoal;
+export const archiveGoal = useMock ? mockApi.archiveGoal : realApi.archiveGoal;
+export const applyGoalTemplate = useMock ? mockApi.applyGoalTemplate : realApi.applyGoalTemplate;
+export const upsertGoalLog = useMock ? mockApi.upsertGoalLog : realApi.upsertGoalLog;
+export const deleteGoalLog = useMock ? mockApi.deleteGoalLog : realApi.deleteGoalLog;
+export const addLog = useMock ? mockApi.addLog : realApi.addLog;
+export const deleteLog = useMock ? mockApi.deleteLog : realApi.deleteLog;
+
 export type AdminUserRow = mockApi.AdminUserRow;
