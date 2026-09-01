@@ -1,9 +1,10 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
-import { ImagePlus, Trash2 } from "lucide-react";
+import { ImagePlus, Share2, Trash2 } from "lucide-react";
 import { AppShell, PageHeader } from "@/components/AppShell";
 import { useMedia, useMemoryMutations, useSignedUrls } from "@/hooks/useChallenge";
+import { ShareLogSheet } from "@/components/feed/ShareLogSheet";
 import { dayNumber, formatLongDate, todayISO, type Member } from "@/lib/challenge";
 import type { Log, Media } from "@/lib/goals";
 
@@ -60,6 +61,9 @@ function MemoriesView({
   const [place, setPlace] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const fileInput = useRef<HTMLInputElement>(null);
+
+  const [shareLogId, setShareLogId] = useState<string | null>(null);
+  const [shareDefaultBody, setShareDefaultBody] = useState("");
 
   const byLog = useMemo(() => {
     const map = new Map<string, Media[]>();
@@ -156,9 +160,6 @@ function MemoriesView({
               <div className="flex items-start justify-between gap-3 px-4 pt-4">
                 <div>
                   <p className="text-sm font-medium">
-                    {/* A memory can be dated before the journey began, and
-                        dayNumber goes to 0 and below there. "Day 0" means
-                        nothing to a reader, so the date stands alone. */}
                     {dayNumber(journeyStart, m.date) >= 1
                       ? `Day ${dayNumber(journeyStart, m.date)} · ${formatLongDate(m.date)}`
                       : formatLongDate(m.date)}
@@ -168,21 +169,33 @@ function MemoriesView({
                     {m.place ? ` · ${m.place}` : ""}
                   </p>
                 </div>
-                {/* Only your own memories are yours to delete. */}
                 {mine ? (
-                  <button
-                    type="button"
-                    aria-label="Delete this memory"
-                    onClick={() =>
-                      remove.mutate(m.id, {
-                        onSuccess: () => toast.success("Removed"),
-                        onError: (e: Error) => toast.error(e.message),
-                      })
-                    }
-                    className="rounded-full border border-input p-1.5 text-muted-foreground"
-                  >
-                    <Trash2 className="size-3.5" />
-                  </button>
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      type="button"
+                      aria-label="Share this memory"
+                      onClick={() => {
+                        setShareLogId(m.id);
+                        setShareDefaultBody(m.note ?? "");
+                      }}
+                      className="rounded-full border border-input p-1.5 text-muted-foreground"
+                    >
+                      <Share2 className="size-3.5" />
+                    </button>
+                    <button
+                      type="button"
+                      aria-label="Delete this memory"
+                      onClick={() =>
+                        remove.mutate(m.id, {
+                          onSuccess: () => toast.success("Removed"),
+                          onError: (e: Error) => toast.error(e.message),
+                        })
+                      }
+                      className="rounded-full border border-input p-1.5 text-muted-foreground"
+                    >
+                      <Trash2 className="size-3.5" />
+                    </button>
+                  </div>
                 ) : null}
               </div>
 
@@ -243,6 +256,16 @@ function MemoriesView({
           );
         })}
       </ol>
+
+      <ShareLogSheet
+        open={shareLogId !== null}
+        onOpenChange={(open) => { if (!open) setShareLogId(null); }}
+        myMemberId={me.id}
+        journeyId={journeyId}
+        logId={shareLogId}
+        defaultBody={shareDefaultBody}
+        context="Share this memory"
+      />
     </div>
   );
 }

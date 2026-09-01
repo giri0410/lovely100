@@ -834,3 +834,97 @@ export async function deleteMedia(media: Media): Promise<void> {
   persist();
   return delay(undefined);
 }
+
+/* ---------- social feed (P7) ---------- */
+
+export interface Post {
+  id: string;
+  author_member_id: string;
+  journey_id: string;
+  log_id: string | null;
+  body: string;
+  visibility: 'public';
+  created_at: string;
+  author_name: string;
+  author_avatar: string | null;
+}
+
+export interface Follow {
+  follower_member_id: string;
+  following_member_id: string;
+  created_at: string;
+}
+
+export interface DiscoverRow {
+  member_id: string;
+  name: string;
+  avatar: string | null;
+  last_posted_at: string;
+}
+
+export async function createPost(_input: {
+  authorMemberId: string;
+  journeyId: string;
+  logId: string | null;
+  body: string;
+}): Promise<Post> {
+  return delay({
+    id: uid(),
+    author_member_id: _input.authorMemberId,
+    journey_id: _input.journeyId,
+    log_id: _input.logId,
+    body: _input.body,
+    visibility: 'public' as const,
+    created_at: new Date().toISOString(),
+    author_name: 'You',
+    author_avatar: null,
+  });
+}
+
+export async function deletePost(_postId: string): Promise<void> {
+  return delay(undefined);
+}
+
+export async function listFeedPosts(_input: {
+  memberId: string;
+  limit: number;
+  cursor?: string;
+}): Promise<Post[]> {
+  return delay([]);
+}
+
+export async function listUserPosts(_input: {
+  memberId: string;
+  limit?: number;
+}): Promise<Post[]> {
+  return delay([]);
+}
+
+export async function followMember(_input: {
+  followerMemberId: string;
+  followingMemberId: string;
+}): Promise<void> {
+  return delay(undefined);
+}
+
+export async function unfollowMember(_input: {
+  followerMemberId: string;
+  followingMemberId: string;
+}): Promise<void> {
+  return delay(undefined);
+}
+
+export async function listFollowing(_memberId: string): Promise<Follow[]> {
+  return delay([]);
+}
+
+export async function listFollowers(_memberId: string): Promise<Follow[]> {
+  return delay([]);
+}
+
+export async function discoverMembers(_input: {
+  memberId: string;
+  limit: number;
+}): Promise<DiscoverRow[]> {
+  return delay([]);
+}

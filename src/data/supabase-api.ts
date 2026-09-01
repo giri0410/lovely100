@@ -662,3 +662,172 @@ export async function deleteMedia(media: Media): Promise<void> {
   const { error } = await supabase.from("media").delete().eq("id", media.id);
   if (error) throw new Error(error.message);
 }
+
+/* ---------- social feed (P7) ---------- */
+
+export interface Post {
+  id: string;
+  author_member_id: string;
+  journey_id: string;
+  log_id: string | null;
+  body: string;
+  visibility: 'public';
+  created_at: string;
+  author_name: string;
+  author_avatar: string | null;
+}
+
+export interface Follow {
+  follower_member_id: string;
+  following_member_id: string;
+  created_at: string;
+}
+
+export interface DiscoverRow {
+  member_id: string;
+  name: string;
+  avatar: string | null;
+  last_posted_at: string;
+}
+
+export async function createPost(input: {
+  authorMemberId: string;
+  journeyId: string;
+  logId: string | null;
+  body: string;
+}): Promise<Post> {
+  // cast to any: posts/follows tables added via migration, types.ts not yet regenerated
+  const db = supabase as any;
+  const { data, error } = await db
+    .from('posts')
+    .insert({
+      author_member_id: input.authorMemberId,
+      journey_id: input.journeyId,
+      log_id: input.logId,
+      body: input.body,
+    })
+    .select('*, members!author_member_id(name, avatar)')
+    .single();
+  if (error) throw new Error(error.message);
+  return {
+    ...data,
+    author_name: data.members?.name ?? '',
+    author_avatar: data.members?.avatar ?? null,
+  } as Post;
+}
+
+export async function deletePost(postId: string): Promise<void> {
+  const db = supabase as any;
+  const { error } = await db.from('posts').delete().eq('id', postId);
+  if (error) throw new Error(error.message);
+}
+
+export async function listFeedPosts(input: {
+  memberId: string;
+  limit: number;
+  cursor?: string;
+}): Promise<Post[]> {
+  const db = supabase as any;
+  const { data: followRows } = await db
+    .from('follows')
+    .select('following_member_id')
+    .eq('follower_member_id', input.memberId);
+
+  const followedIds = (followRows ?? []).map((r: any) => r.following_member_id);
+  const authorIds = [...followedIds, input.memberId];
+
+  let query = db
+    .from('posts')
+    .select('*, members!author_member_id(name, avatar)')
+    .in('author_member_id', authorIds)
+    .order('created_at', { ascending: false })
+    .limit(input.limit);
+
+  if (input.cursor) {
+    query = query.lt('created_at', input.cursor);
+  }
+
+  const { data, error } = await query;
+  if (error) throw new Error(error.message);
+  return (data ?? []).map((row: any) => ({
+    ...row,
+    author_name: row.members?.name ?? '',
+    author_avatar: row.members?.avatar ?? null,
+  })) as Post[];
+}
+
+export async function listUserPosts(input: {
+  memberId: string;
+  limit?: number;
+}): Promise<Post[]> {
+  const db = supabase as any;
+  const { data, error } = await db
+    .from('posts')
+    .select('*, members!author_member_id(name, avatar)')
+    .eq('author_member_id', input.memberId)
+    .order('created_at', { ascending: false })
+    .limit(input.limit ?? 20);
+  if (error) throw new Error(error.message);
+  return (data ?? []).map((row: any) => ({
+    ...row,
+    author_name: row.members?.name ?? '',
+    author_avatar: row.members?.avatar ?? null,
+  })) as Post[];
+}
+
+export async function followMember(input: {
+  followerMemberId: string;
+  followingMemberId: string;
+}): Promise<void> {
+  const db = supabase as any;
+  const { error } = await db.from('follows').insert({
+    follower_member_id: input.followerMemberId,
+    following_member_id: input.followingMemberId,
+  });
+  if (error) throw new Error(error.message);
+}
+
+export async function unfollowMember(input: {
+  followerMemberId: string;
+  followingMemberId: string;
+}): Promise<void> {
+  const db = supabase as any;
+  const { error } = await db
+    .from('follows')
+    .delete()
+    .eq('follower_member_id', input.followerMemberId)
+    .eq('following_member_id', input.followingMemberId);
+  if (error) throw new Error(error.message);
+}
+
+export async function listFollowing(memberId: string): Promise<Follow[]> {
+  const db = supabase as any;
+  const { data, error } = await db
+    .from('follows')
+    .select('*')
+    .eq('follower_member_id', memberId);
+  if (error) throw new Error(error.message);
+  return (data ?? []) as Follow[];
+}
+
+export async function listFollowers(memberId: string): Promise<Follow[]> {
+  const db = supabase as any;
+  const { data, error } = await db
+    .from('follows')
+    .select('*')
+    .eq('following_member_id', memberId);
+  if (error) throw new Error(error.message);
+  return (data ?? []) as Follow[];
+}
+
+export async function discoverMembers(input: {
+  memberId: string;
+  limit: number;
+}): Promise<DiscoverRow[]> {
+  const { data, error } = await supabase.rpc('discover_members' as any, {
+    _member_id: input.memberId,
+    _limit: input.limit,
+  });
+  if (error) throw new Error(error.message);
+  return (data ?? []) as DiscoverRow[];
+}

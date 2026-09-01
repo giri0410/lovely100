@@ -14,6 +14,7 @@ import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AnalyticsRouteImport } from './routes/analytics'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as CalendarRouteImport } from './routes/calendar'
+import { Route as FeedRouteImport } from './routes/feed'
 import { Route as GoalsRouteImport } from './routes/goals'
 import { Route as MemoriesRouteImport } from './routes/memories'
 import { Route as MoneyRouteImport } from './routes/money'
@@ -50,6 +51,11 @@ const AuthRoute = AuthRouteImport.update({
 const CalendarRoute = CalendarRouteImport.update({
   id: '/calendar',
   path: '/calendar',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FeedRoute = FeedRouteImport.update({
+  id: '/feed',
+  path: '/feed',
   getParentRoute: () => rootRouteImport,
 } as any)
 const GoalsRoute = GoalsRouteImport.update({
@@ -119,6 +125,7 @@ export interface FileRoutesByFullPath {
   '/analytics': typeof AnalyticsRoute
   '/auth': typeof AuthRoute
   '/calendar': typeof CalendarRoute
+  '/feed': typeof FeedRoute
   '/goals': typeof GoalsRoute
   '/memories': typeof MemoriesRoute
   '/money': typeof MoneyRoute
@@ -138,6 +145,7 @@ export interface FileRoutesByTo {
   '/analytics': typeof AnalyticsRoute
   '/auth': typeof AuthRoute
   '/calendar': typeof CalendarRoute
+  '/feed': typeof FeedRoute
   '/goals': typeof GoalsRoute
   '/memories': typeof MemoriesRoute
   '/money': typeof MoneyRoute
@@ -158,6 +166,7 @@ export interface FileRoutesById {
   '/analytics': typeof AnalyticsRoute
   '/auth': typeof AuthRoute
   '/calendar': typeof CalendarRoute
+  '/feed': typeof FeedRoute
   '/goals': typeof GoalsRoute
   '/memories': typeof MemoriesRoute
   '/money': typeof MoneyRoute
@@ -179,6 +188,7 @@ export interface FileRouteTypes {
     | '/analytics'
     | '/auth'
     | '/calendar'
+    | '/feed'
     | '/goals'
     | '/memories'
     | '/money'
@@ -198,6 +208,7 @@ export interface FileRouteTypes {
     | '/analytics'
     | '/auth'
     | '/calendar'
+    | '/feed'
     | '/goals'
     | '/memories'
     | '/money'
@@ -217,6 +228,7 @@ export interface FileRouteTypes {
     | '/analytics'
     | '/auth'
     | '/calendar'
+    | '/feed'
     | '/goals'
     | '/memories'
     | '/money'
@@ -237,6 +249,7 @@ export interface RootRouteChildren {
   AnalyticsRoute: typeof AnalyticsRoute
   AuthRoute: typeof AuthRoute
   CalendarRoute: typeof CalendarRoute
+  FeedRoute: typeof FeedRoute
   GoalsRoute: typeof GoalsRoute
   MemoriesRoute: typeof MemoriesRoute
   MoneyRoute: typeof MoneyRoute
@@ -286,6 +299,13 @@ declare module '@tanstack/react-router' {
       path: '/calendar'
       fullPath: '/calendar'
       preLoaderRoute: typeof CalendarRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/feed': {
+      id: '/feed'
+      path: '/feed'
+      fullPath: '/feed'
+      preLoaderRoute: typeof FeedRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/goals': {
@@ -381,6 +401,7 @@ const rootRouteChildren: RootRouteChildren = {
   AnalyticsRoute: AnalyticsRoute,
   AuthRoute: AuthRoute,
   CalendarRoute: CalendarRoute,
+  FeedRoute: FeedRoute,
   GoalsRoute: GoalsRoute,
   MemoriesRoute: MemoriesRoute,
   MoneyRoute: MoneyRoute,

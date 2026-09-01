@@ -1,9 +1,10 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Camera, Check, PartyPopper, Plus, Settings2, Sparkles } from "lucide-react";
+import { Camera, Check, PartyPopper, Plus, Settings2, Share2, Sparkles } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { ProgressRing } from "@/components/ProgressRing";
 import { useAddLogMutation, useGoalLogMutation } from "@/hooks/useChallenge";
+import { ShareLogSheet } from "@/components/feed/ShareLogSheet";
 import {
   MILESTONES,
   encouragement,
@@ -38,6 +39,25 @@ function pctOrCount(pct: number | null, count: number, noun: string): string {
 }
 
 function TodayPage() {
+  const [shareOpen, setShareOpen] = useState(false);
+  const [shareLogId, setShareLogId] = useState<string | null>(null);
+  const [shareBody, setShareBody] = useState("");
+  const [shareContext, setShareContext] = useState("");
+
+  const openShare = (logId: string | null, body: string, context: string) => {
+    setShareLogId(logId);
+    setShareBody(body);
+    setShareContext(context);
+    setShareOpen(true);
+  };
+
+  const closeShare = () => {
+    setShareOpen(false);
+    setShareLogId(null);
+    setShareBody("");
+    setShareContext("");
+  };
+
   return (
     <AppShell>
       {({ me, data, progress, t, partner, mine }) => {
@@ -93,7 +113,7 @@ function TodayPage() {
             {milestone ? (
               <div className="surface animate-pop flex items-center gap-3 border-primary/30 bg-primary/5 p-4">
                 <PartyPopper className="size-6 text-primary" />
-                <div>
+                <div className="flex-1">
                   <p className="font-display text-lg">🎉 {milestone} days!</p>
                   <p className="text-sm text-muted-foreground">
                     {together
@@ -101,6 +121,14 @@ function TodayPage() {
                       : `You've kept this going for ${milestone} days.`}
                   </p>
                 </div>
+                <button
+                  type="button"
+                  onClick={() => openShare(null, `Day ${milestone} — still going! 🎉`, `Day ${milestone} milestone`)}
+                  className="flex items-center gap-1.5 rounded-full border border-input px-3 py-1.5 text-xs font-medium"
+                >
+                  <Share2 className="size-3" />
+                  Share
+                </button>
               </div>
             ) : null}
 
@@ -159,6 +187,9 @@ function TodayPage() {
                   date={today}
                   journeyId={data.journey.id}
                   memberId={me.id}
+                  onShare={(logId) => {
+                    openShare(logId, "", `${goal.icon ?? ""} ${goal.title}`.trim());
+                  }}
                 />
               ))}
 
@@ -268,6 +299,16 @@ function TodayPage() {
                 </p>
               </section>
             ) : null}
+
+            <ShareLogSheet
+              open={shareOpen}
+              onOpenChange={(open) => { if (!open) closeShare(); }}
+              myMemberId={me.id}
+              journeyId={data.journey.id}
+              logId={shareLogId}
+              defaultBody={shareBody}
+              context={shareContext || "Share to feed"}
+            />
           </div>
         );
       }}
@@ -298,12 +339,14 @@ export function GoalCard({
   date,
   journeyId,
   memberId,
+  onShare,
 }: {
   goal: Goal;
   log: Log | undefined;
   date: string;
   journeyId: string;
   memberId: string;
+  onShare?: (logId: string) => void;
 }) {
   const mutation = useGoalLogMutation(journeyId, memberId);
   const logged = Boolean(log);
@@ -395,6 +438,17 @@ export function GoalCard({
           Logged, but short of {goal.target_per_period}
           {goal.unit ? ` ${goal.unit}` : ""} — it counts as progress, not a finished day.
         </p>
+      ) : null}
+
+      {met && onShare && log ? (
+        <button
+          type="button"
+          onClick={() => onShare(log.id)}
+          className="mt-2 flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground"
+        >
+          <Share2 className="size-3" />
+          Share this
+        </button>
       ) : null}
     </div>
   );

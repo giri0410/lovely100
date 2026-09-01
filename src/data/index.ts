@@ -57,3 +57,16 @@ export const uploadMemoryPhoto = useMock ? mockApi.uploadMemoryPhoto : realApi.u
 export const deleteMedia = useMock ? mockApi.deleteMedia : realApi.deleteMedia;
 
 export type AdminUserRow = mockApi.AdminUserRow;
+
+/* social feed (P7) */
+export const createPost = useMock ? mockApi.createPost : realApi.createPost;
+export const deletePost = useMock ? mockApi.deletePost : realApi.deletePost;
+export const listFeedPosts = useMock ? mockApi.listFeedPosts : realApi.listFeedPosts;
+export const listUserPosts = useMock ? mockApi.listUserPosts : realApi.listUserPosts;
+export const followMember = useMock ? mockApi.followMember : realApi.followMember;
+export const unfollowMember = useMock ? mockApi.unfollowMember : realApi.unfollowMember;
+export const listFollowing = useMock ? mockApi.listFollowing : realApi.listFollowing;
+export const listFollowers = useMock ? mockApi.listFollowers : realApi.listFollowers;
+export const discoverMembers = useMock ? mockApi.discoverMembers : realApi.discoverMembers;
+
+export type { Post, Follow, DiscoverRow } from './supabase-api';
