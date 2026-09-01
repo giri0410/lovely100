@@ -25,6 +25,7 @@ import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as ReviewRouteImport } from './routes/review'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as StatsRouteImport } from './routes/stats'
+import { Route as StyleguideRouteImport } from './routes/styleguide'
 import { Route as SummaryRouteImport } from './routes/summary'
 import { Route as TodayRouteImport } from './routes/today'
 
@@ -108,6 +109,11 @@ const StatsRoute = StatsRouteImport.update({
   path: '/stats',
   getParentRoute: () => rootRouteImport,
 } as any)
+const StyleguideRoute = StyleguideRouteImport.update({
+  id: '/styleguide',
+  path: '/styleguide',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SummaryRoute = SummaryRouteImport.update({
   id: '/summary',
   path: '/summary',
@@ -136,6 +142,7 @@ export interface FileRoutesByFullPath {
   '/review': typeof ReviewRoute
   '/settings': typeof SettingsRoute
   '/stats': typeof StatsRoute
+  '/styleguide': typeof StyleguideRoute
   '/summary': typeof SummaryRoute
   '/today': typeof TodayRoute
 }
@@ -156,6 +163,7 @@ export interface FileRoutesByTo {
   '/review': typeof ReviewRoute
   '/settings': typeof SettingsRoute
   '/stats': typeof StatsRoute
+  '/styleguide': typeof StyleguideRoute
   '/summary': typeof SummaryRoute
   '/today': typeof TodayRoute
 }
@@ -177,6 +185,7 @@ export interface FileRoutesById {
   '/review': typeof ReviewRoute
   '/settings': typeof SettingsRoute
   '/stats': typeof StatsRoute
+  '/styleguide': typeof StyleguideRoute
   '/summary': typeof SummaryRoute
   '/today': typeof TodayRoute
 }
@@ -199,6 +208,7 @@ export interface FileRouteTypes {
     | '/review'
     | '/settings'
     | '/stats'
+    | '/styleguide'
     | '/summary'
     | '/today'
   fileRoutesByTo: FileRoutesByTo
@@ -219,6 +229,7 @@ export interface FileRouteTypes {
     | '/review'
     | '/settings'
     | '/stats'
+    | '/styleguide'
     | '/summary'
     | '/today'
   id:
@@ -239,6 +250,7 @@ export interface FileRouteTypes {
     | '/review'
     | '/settings'
     | '/stats'
+    | '/styleguide'
     | '/summary'
     | '/today'
   fileRoutesById: FileRoutesById
@@ -260,6 +272,7 @@ export interface RootRouteChildren {
   ReviewRoute: typeof ReviewRoute
   SettingsRoute: typeof SettingsRoute
   StatsRoute: typeof StatsRoute
+  StyleguideRoute: typeof StyleguideRoute
   SummaryRoute: typeof SummaryRoute
   TodayRoute: typeof TodayRoute
 }
@@ -378,6 +391,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof StatsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/styleguide': {
+      id: '/styleguide'
+      path: '/styleguide'
+      fullPath: '/styleguide'
+      preLoaderRoute: typeof StyleguideRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/summary': {
       id: '/summary'
       path: '/summary'
@@ -412,6 +432,7 @@ const rootRouteChildren: RootRouteChildren = {
   ReviewRoute: ReviewRoute,
   SettingsRoute: SettingsRoute,
   StatsRoute: StatsRoute,
+  StyleguideRoute: StyleguideRoute,
   SummaryRoute: SummaryRoute,
   TodayRoute: TodayRoute,
 }

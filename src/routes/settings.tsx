@@ -373,6 +373,13 @@ function SettingsView({ me, journey, goals }: { me: Member; journey: Journey; go
         Admin console
       </Link>
 
+      <Link
+        to="/styleguide"
+        className="block w-full rounded-xl border border-input py-2.5 text-center text-sm font-medium"
+      >
+        Style guide
+      </Link>
+
       <button onClick={signOut} className="w-full rounded-xl border border-input py-2.5 text-sm font-medium">
         Sign out
       </button>
